@@ -3,42 +3,40 @@
 #include <raymath.h>
 
 int main(void) {
-  // Window Dimensions
+  // --- Window Dimensions ---
   const int windowWidth = 800;
   const int windowHeight = 800;
 
-  // Tank Dimensions
+  // --- Tank Dimensions ---
   const float tankWidth = 100.0f;
   const float tankHeight = 70.0f;
 
-  // Initial Tank Positions
+  // --- Initial Tank Positions ---
   int tank1XPos = 50;
   int tank1YPos = (windowHeight - tankHeight) / 2;
   float tank1Rotation = 0.0f;
   float speed = 3.0f;
   float tank1HalfW = tankWidth / 2;
   float tank1HalfH = tankHeight / 2;
-  float tankHitboxRadius =
-      sqrtf(powf(tank1HalfW, 2) + powf(tank1HalfH, 2));
-  
-  Vector2 tank1Origin = {tank1HalfH, tank1HalfH};
+
+  Vector2 tank1Origin = {tank1HalfW, tank1HalfH};
 
   int tank2XPos = windowWidth - tank1XPos - tankWidth;
   int tank2YPos = tank1YPos;
   Vector2 tank2Origin = tank1Origin;
   float tank2Rotation = 180.0f;
 
-  // Tank Rectangles
+  // --- Tank Rectangles ---
   Rectangle tank1 = {tank1XPos, tank1YPos, tankWidth, tankHeight};
   Rectangle tank2 = {tank2XPos, tank2YPos, tankWidth, tankHeight};
 
-  // Initialize Window
+  // --- Initialize Window ---
   InitWindow(windowWidth, windowHeight, "Tank Game");
   SetTargetFPS(60);
 
-  // Game Loop
+  // --- Game Loop ---
   while (!WindowShouldClose()) {
-    // Input Handling
+    // --- Input Handling ---
 
     // Tank 1 Movement
     if (IsKeyDown(KEY_W)) {
@@ -86,28 +84,41 @@ int main(void) {
     if (IsKeyDown(KEY_RIGHT))
       tank2Rotation += 2;
 
-    // Boundary Constraints
+    // --- Boundary Constraints ---
+
     // Tank 1
-    if (tank1.x - tankHitboxRadius < 0)
-      tank1.x = tankHitboxRadius;
-    if (tank1.x > windowWidth - tankHitboxRadius)
-      tank1.x = windowWidth - tankHitboxRadius;
-    if (tank1.y - tankHitboxRadius < 0)
-      tank1.y = tankHitboxRadius;
-    if (tank1.y > windowHeight - tankHitboxRadius)
-      tank1.y = windowHeight - tankHitboxRadius;
+    float tank1Rad = DEG2RAD * tank1Rotation;
+    tank1HalfW = (tankWidth / 2) * fabsf(cosf(tank1Rad)) +
+                 (tankHeight / 2) * fabsf(sinf(tank1Rad));
+    tank1HalfH = (tankWidth / 2) * fabsf(sinf(tank1Rad)) +
+                 (tankHeight / 2) * fabsf(cosf(tank1Rad));
+
+    if (tank1.x - tank1HalfW < 0)
+      tank1.x = tank1HalfW;
+    if (tank1.x + tank1HalfW > windowWidth)
+      tank1.x = windowWidth - tank1HalfW;
+    if (tank1.y - tank1HalfH < 0)
+      tank1.y = tank1HalfH;
+    if (tank1.y + tank1HalfH > windowHeight)
+      tank1.y = windowHeight - tank1HalfH;
 
     // Tank 2
-    if (tank2.x < 0)
-      tank2.x = 0;
-    if (tank2.x > windowWidth - tankWidth / 2)
-      tank2.x = windowWidth - tankWidth / 2;
-    if (tank2.y < 0)
-      tank2.y = 0;
-    if (tank2.y > windowHeight - tankHeight / 2)
-      tank2.y = windowHeight - tankHeight / 2;
+    float tank2Rad = DEG2RAD * tank2Rotation;
+    float tank2HalfW = (tankWidth / 2) * fabsf(cosf(tank2Rad)) +
+                       (tankHeight / 2) * fabsf(sinf(tank2Rad));
+    float tank2HalfH = (tankWidth / 2) * fabsf(sinf(tank2Rad)) +
+                       (tankHeight / 2) * fabsf(cosf(tank2Rad));
 
-    // Drawing
+    if (tank2.x - tank2HalfW < 0)
+      tank2.x = tank2HalfW;
+    if (tank2.x + tank2HalfW > windowWidth)
+      tank2.x = windowWidth - tank2HalfW;
+    if (tank2.y - tank2HalfH < 0)
+      tank2.y = tank2HalfH;
+    if (tank2.y + tank2HalfH > windowHeight)
+      tank2.y = windowHeight - tank2HalfH;
+
+    // --- Drawing ---
     BeginDrawing();
     ClearBackground(WHITE);
 
@@ -117,6 +128,7 @@ int main(void) {
 
     EndDrawing();
   }
+  // --- Cleanup ---
   CloseWindow();
   return 0;
 }
