@@ -1,3 +1,6 @@
+> I wanted to learn how to make a game from scratch using C and raylib.
+> And this documents the entire process of making it from scratch.
+
 # Tank Game
 
 A 2D local two-player tank game built from scratch in C using [raylib](https://www.raylib.com/).
