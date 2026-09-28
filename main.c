@@ -58,6 +58,28 @@ int main(void) {
       tank2XPos += 5;
     }
 
+    // Boundary Constraints
+    // Tank 1
+    if (tank1XPos < 0)
+      tank1XPos=0;
+    if (tank1XPos > windowWidth - tankWidth)
+      tank1XPos = windowWidth - tankWidth;
+    if (tank1YPos < 0)
+      tank1YPos = 0;
+    if (tank1YPos > windowHeight - tankHeight)
+      tank1YPos = windowHeight - tankHeight;
+
+    // Tank 2
+    if (tank2XPos < 0)
+      tank2XPos=0;
+    if (tank2XPos > windowWidth - tankWidth)
+      tank2XPos = windowWidth - tankWidth;
+    if (tank2YPos < 0)
+      tank2YPos = 0;
+    if (tank2YPos > windowHeight - tankHeight)
+      tank2YPos = windowHeight - tankHeight;
+
+
     // Drawing
     BeginDrawing();
     ClearBackground(WHITE);
