@@ -1,0 +1,13 @@
+# Build artifacts
+game
+*.o
+*.a
+*.dylib
+
+# OS metadata
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
