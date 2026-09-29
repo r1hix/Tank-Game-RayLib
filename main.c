@@ -21,6 +21,7 @@ typedef struct Bullet {
   Vector2 velocity;
   float size;
   Color color;
+  float lifetime;
 } Bullet;
 
 Bullet tank1Bullets[maxBullets];
@@ -101,21 +102,77 @@ int main(void) {
       tank2Rotation += 2;
 
     // Tank 1 Shooting
-    if (IsKeyPressed(KEY_L)) {
+    if (IsKeyPressed(KEY_LEFT_SHIFT)) {
       for (int i = 0; i < maxBullets; i++) {
         if (!tank1Bullets[i].active) {
           float rad = DEG2RAD * tank1Rotation;
           float dx = cosf(rad);
           float dy = sinf(rad);
           float offset = (tankWidth / 2) + tank1Bullets->size;
-          Vector2 spawnLocation = {tank1.x + (dx * offset), tank1.y + (dy * (dy * offset))};
+          Vector2 spawnLocation = {tank1.x + (dx * offset),
+                                   tank1.y + (dy * offset)};
           Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
 
+          tank1Bullets[i].size = 10.0f;
           tank1Bullets[i].position = spawnLocation;
           tank1Bullets[i].velocity = velocity;
-          tank1Bullets[i].color = BLUE;
+          tank1Bullets[i].color = BLACK;
           tank1Bullets[i].active = true;
+          tank1Bullets[i].lifetime = 0.0f;
           break;
+        }
+      }
+    }
+
+    // Tank 2 Shooting
+    if (IsKeyPressed(KEY_RIGHT_SHIFT)) {
+      for (int i = 0; i < maxBullets; i++) {
+        if (!tank2Bullets[i].active) {
+          float rad = DEG2RAD * tank2Rotation;
+          float dx = cosf(rad);
+          float dy = sinf(rad);
+          float offset = (tankWidth / 2) + tank2Bullets->size;
+          Vector2 spawnLocation = {tank2.x + (dx * offset),
+                                   tank2.y + (dy * offset)};
+          Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
+
+          tank2Bullets[i].size = 10.0f;
+          tank2Bullets[i].position = spawnLocation;
+          tank2Bullets[i].velocity = velocity;
+          tank2Bullets[i].color = BLACK;
+          tank2Bullets[i].active = true;
+          tank2Bullets[i].lifetime = 0.0f;
+          break;
+        }
+      }
+    }
+
+    // --- Updating Bullets ---
+
+    // Tank1
+    for (int i = 0; i < maxBullets; i++) {
+      if (tank1Bullets[i].active) {
+        tank1Bullets[i].position.x += tank1Bullets[i].velocity.x;
+        tank1Bullets[i].position.y += tank1Bullets[i].velocity.y;
+
+        tank1Bullets[i].lifetime += GetFrameTime();
+        if (tank1Bullets[i].lifetime > 2) {
+          tank1Bullets[i].active = false;
+          tank1Bullets[i].lifetime = 0.0f;
+        }
+      }
+    }
+
+    // Tank 2
+    for (int i = 0; i < maxBullets; i++) {
+      if (tank2Bullets[i].active) {
+        tank2Bullets[i].position.x += tank2Bullets[i].velocity.x;
+        tank2Bullets[i].position.y += tank2Bullets[i].velocity.y;
+
+        tank2Bullets[i].lifetime += GetFrameTime();
+        if (tank2Bullets[i].lifetime > 2) {
+          tank2Bullets[i].active = false;
+          tank2Bullets[i].lifetime = 0.0f;
         }
       }
     }
@@ -178,19 +235,26 @@ int main(void) {
         }
       }
     }
-    
+
     // --- Drawing ---
     BeginDrawing();
     ClearBackground(WHITE);
 
     // Drawing Tanks
-    DrawRectanglePro(tank1, tank1Origin, tank1Rotation, BLACK);
+    DrawRectanglePro(tank1, tank1Origin, tank1Rotation, BLUE);
     DrawRectanglePro(tank2, tank2Origin, tank2Rotation, RED);
 
     for (int i = 0; i < maxBullets; i++) {
       if (tank1Bullets[i].active) {
-        DrawCircleV(tank1Bullets[i].position, tank1Bullets[i].size, tank1Bullets[i].color);
-        break;
+        DrawCircleV(tank1Bullets[i].position, tank1Bullets[i].size,
+                    tank1Bullets[i].color);
+      }
+    }
+
+    for (int i = 0; i < maxBullets; i++) {
+      if (tank2Bullets[i].active) {
+        DrawCircleV(tank2Bullets[i].position, tank2Bullets[i].size,
+                    tank2Bullets[i].color);
       }
     }
 
