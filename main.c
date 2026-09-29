@@ -236,6 +236,20 @@ int main(void) {
       }
     }
 
+    // --- Bullet Collisions ---
+    for (int i = 0; i < maxBullets; i++) {
+      // Check if bullet 1 hits bullet 2
+      if (CheckCollisionCircles(tank1Bullets[i].position, tank1Bullets[i].size,
+                                tank2Bullets[i].position,
+                                tank2Bullets[i].size)) {
+        tank1Bullets[i].active = false;
+        tank2Bullets[i].active = false;
+
+        tank1Bullets[i].lifetime = 0.0f;
+        tank2Bullets[i].lifetime = 0.0f;
+      }
+    }
+
     // --- Drawing ---
     BeginDrawing();
     ClearBackground(WHITE);
@@ -244,6 +258,7 @@ int main(void) {
     DrawRectanglePro(tank1, tank1Origin, tank1Rotation, BLUE);
     DrawRectanglePro(tank2, tank2Origin, tank2Rotation, RED);
 
+    // Drawing Bullets
     for (int i = 0; i < maxBullets; i++) {
       if (tank1Bullets[i].active) {
         DrawCircleV(tank1Bullets[i].position, tank1Bullets[i].size,
