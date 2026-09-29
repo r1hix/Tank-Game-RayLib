@@ -2,14 +2,31 @@
 #include <raylib.h>
 #include <raymath.h>
 
-int main(void) {
-  // --- Window Dimensions ---
-  const int windowWidth = 800;
-  const int windowHeight = 800;
+// - Constants -
+// --- Window Dimensions ---
+const int windowWidth = 800;
+const int windowHeight = 800;
 
-  // --- Tank Dimensions ---
-  const float tankWidth = 100.0f;
-  const float tankHeight = 70.0f;
+// --- Tank Dimensions ---
+const float tankWidth = 100.0f;
+const float tankHeight = 70.0f;
+
+// --- Bullets ---
+#define maxBullets 5
+#define bulletSpeed 5
+
+typedef struct Bullet {
+  bool active;
+  Vector2 position;
+  Vector2 velocity;
+  float size;
+  Color color;
+} Bullet;
+
+Bullet tank1Bullets[maxBullets];
+Bullet tank2Bullets[maxBullets];
+
+int main(void) {
 
   // --- Initial Tank Positions ---
   int tank1XPos = 50;
@@ -18,7 +35,6 @@ int main(void) {
   float speed = 3.0f;
   float tank1HalfW = tankWidth / 2;
   float tank1HalfH = tankHeight / 2;
-
   Vector2 tank1Origin = {tank1HalfW, tank1HalfH};
 
   int tank2XPos = windowWidth - tank1XPos - tankWidth;
@@ -84,6 +100,26 @@ int main(void) {
     if (IsKeyDown(KEY_RIGHT))
       tank2Rotation += 2;
 
+    // Tank 1 Shooting
+    if (IsKeyPressed(KEY_L)) {
+      for (int i = 0; i < maxBullets; i++) {
+        if (!tank1Bullets[i].active) {
+          float rad = DEG2RAD * tank1Rotation;
+          float dx = cosf(rad);
+          float dy = sinf(rad);
+          float offset = (tankWidth / 2) + tank1Bullets->size;
+          Vector2 spawnLocation = {tank1.x + (dx * offset), tank1.y + (dy * (dy * offset))};
+          Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
+
+          tank1Bullets[i].position = spawnLocation;
+          tank1Bullets[i].velocity = velocity;
+          tank1Bullets[i].color = BLUE;
+          tank1Bullets[i].active = true;
+          break;
+        }
+      }
+    }
+
     // --- Boundary Constraints ---
 
     // Tank 1
@@ -118,6 +154,31 @@ int main(void) {
     if (tank2.y + tank2HalfH > windowHeight)
       tank2.y = windowHeight - tank2HalfH;
 
+    // --- Tank Collisions ---
+
+    if (CheckCollisionRecs(tank1, tank2)) {
+      float overlapX = (tank1HalfW + tank2HalfW) - fabsf(tank1.x - tank2.x);
+      float overlapY = (tank1HalfH + tank2HalfH) - fabsf(tank1.y - tank2.y);
+
+      if (overlapX < overlapY) {
+        if (tank1.x < tank2.x) {
+          tank1.x -= overlapX / 2;
+          tank2.x += overlapX / 2;
+        } else {
+          tank1.x += overlapX / 2;
+          tank2.x -= overlapX / 2;
+        }
+      } else {
+        if (tank1.y < tank2.y) {
+          tank1.y -= overlapY / 2;
+          tank2.y += overlapY / 2;
+        } else {
+          tank1.y += overlapY / 2;
+          tank2.y -= overlapY / 2;
+        }
+      }
+    }
+    
     // --- Drawing ---
     BeginDrawing();
     ClearBackground(WHITE);
@@ -125,6 +186,13 @@ int main(void) {
     // Drawing Tanks
     DrawRectanglePro(tank1, tank1Origin, tank1Rotation, BLACK);
     DrawRectanglePro(tank2, tank2Origin, tank2Rotation, RED);
+
+    for (int i = 0; i < maxBullets; i++) {
+      if (tank1Bullets[i].active) {
+        DrawCircleV(tank1Bullets[i].position, tank1Bullets[i].size, tank1Bullets[i].color);
+        break;
+      }
+    }
 
     EndDrawing();
   }
