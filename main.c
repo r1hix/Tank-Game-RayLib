@@ -10,9 +10,12 @@ const int windowHeight = 800;
 // --- Tank Dimensions ---
 const float tankWidth = 100.0f;
 const float tankHeight = 70.0f;
+const float tankCollisionRad = 44.0f;
+Color tank1Color = BLUE;
+Color tank2Color = RED;
 
 // --- Bullets ---
-#define maxBullets 5
+#define maxBullets 2
 #define bulletSpeed 5
 
 typedef struct Bullet {
@@ -237,8 +240,9 @@ int main(void) {
     }
 
     // --- Bullet Collisions ---
+
+    // Bullet on Bullet Collision
     for (int i = 0; i < maxBullets; i++) {
-      // Check if bullet 1 hits bullet 2
       if (CheckCollisionCircles(tank1Bullets[i].position, tank1Bullets[i].size,
                                 tank2Bullets[i].position,
                                 tank2Bullets[i].size)) {
@@ -250,13 +254,30 @@ int main(void) {
       }
     }
 
+    // Bullet on Tank Collision
+    for (int i = 0; i < maxBullets; i++) {
+      // Tank1Bullets -> Tank2
+      if (CheckCollisionCircles(tank1Bullets[i].position, tank1Bullets[i].size,
+                                (Vector2){tank2.x, tank2.y},
+                                tankCollisionRad)) {
+        tank2Color = PURPLE;
+      }
+
+      // Tank2Bullets -> Tank1
+      if (CheckCollisionCircles(tank2Bullets[i].position, tank2Bullets[i].size,
+                                (Vector2){tank1.x, tank1.y},
+                                tankCollisionRad)) {
+        tank1Color = PURPLE;
+      }
+    }
+
     // --- Drawing ---
     BeginDrawing();
     ClearBackground(WHITE);
 
     // Drawing Tanks
-    DrawRectanglePro(tank1, tank1Origin, tank1Rotation, BLUE);
-    DrawRectanglePro(tank2, tank2Origin, tank2Rotation, RED);
+    DrawRectanglePro(tank1, tank1Origin, tank1Rotation, tank1Color);
+    DrawRectanglePro(tank2, tank2Origin, tank2Rotation, tank2Color);
 
     // Drawing Bullets
     for (int i = 0; i < maxBullets; i++) {
