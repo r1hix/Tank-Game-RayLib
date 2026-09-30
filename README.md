@@ -26,7 +26,17 @@ make clean
 
 ## Controls
 
-| Tank | Move Forward / Backward | Rotate Left / Right |
-|---|---|---|
-| **Tank 1 (Black)** | `W` / `S` | `A` / `D` |
-| **Tank 2 (Red)** | `Up` / `Down` | `Left` / `Right` |
+| Tank | Move | Rotate | Shoot |
+|---|---|---|---|
+| **Tank 1 (Blue)** | `W` / `S` | `A` / `D` | `Left Shift` |
+| **Tank 2 (Red)** | `Up` / `Down` | `Left` / `Right` | `Right Shift` |
+
+## Features
+
+- **Rotational Movement**: Direction-based forward/backward translation based on tank heading angle.
+- **Dynamic Bounding Constraints**: Screen boundary collisions calculated from the tank's rotated bounding box (AABB).
+- **Shooting & Ballistics**: Up to 2 active bullets per tank with automatic lifetime despawn after 2 seconds.
+- **Collision Detection**:
+  - **Bullet vs. Bullet**: Direct projectile collisions neutralize both shots.
+  - **Bullet vs. Tank**: Direct hits register on the opposing tank, changing its color to purple.
+
