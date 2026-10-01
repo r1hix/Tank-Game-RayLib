@@ -248,6 +248,45 @@ int main(void) {
       if (tank2.y + tank2HalfH > windowHeight)
         tank2.y = windowHeight - tank2HalfH;
 
+      // Bullets
+      for (int i = 0; i < maxBullets; i++) {
+        // Tank 1 Bullets
+        if (tank1Bullets[i].position.x < 0) {
+          tank1Bullets[i].position.x = 0;
+          tank1Bullets[i].velocity.x = -tank1Bullets[i].velocity.x;
+        }
+        if (tank1Bullets[i].position.x > windowWidth) {
+          tank1Bullets[i].position.x = windowWidth;
+          tank1Bullets[i].velocity.x = -tank1Bullets[i].velocity.x;
+        }
+        if (tank1Bullets[i].position.y < 0) {
+          tank1Bullets[i].position.y = 0;
+          tank1Bullets[i].velocity.y = -tank1Bullets[i].velocity.y;
+        }
+        if (tank1Bullets[i].position.y > windowHeight) {
+          tank1Bullets[i].position.y = windowHeight;
+          tank1Bullets[i].velocity.y = -tank1Bullets[i].velocity.y;
+        }
+
+        // Tank 2 Bullets
+        if (tank2Bullets[i].position.x < 0) {
+          tank2Bullets[i].position.x = 0;
+          tank2Bullets[i].velocity.x = -tank2Bullets[i].velocity.x;
+        }
+        if (tank2Bullets[i].position.x > windowWidth) {
+          tank2Bullets[i].position.x = windowWidth;
+          tank2Bullets[i].velocity.x = -tank2Bullets[i].velocity.x;
+        }
+        if (tank2Bullets[i].position.y < 0) {
+          tank2Bullets[i].position.y = 0;
+          tank2Bullets[i].velocity.y = -tank2Bullets[i].velocity.y;
+        }
+        if (tank2Bullets[i].position.y > windowHeight) {
+          tank2Bullets[i].position.y = windowHeight;
+          tank2Bullets[i].velocity.y = -tank2Bullets[i].velocity.y;
+        }
+      }
+
       // --- Tank Collisions ---
 
       if (CheckCollisionRecs(tank1, tank2)) {
@@ -391,9 +430,9 @@ int main(void) {
       }
 
       // Drawing UI
-      DrawText(TextFormat("P1 Lives: %i", tank1Lives), 10, 10, 20,
-               BLACK);
-      DrawText(TextFormat("P2 Lives: %i", tank2Lives), windowWidth - MeasureText("P2 Lives: 3", 20) - 10, 10, 20,
+      DrawText(TextFormat("P1 Lives: %i", tank1Lives), 10, 10, 20, BLACK);
+      DrawText(TextFormat("P2 Lives: %i", tank2Lives),
+               windowWidth - MeasureText("P2 Lives: 3", 20) - 10, 10, 20,
                BLACK);
 
       break;
