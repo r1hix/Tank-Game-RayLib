@@ -58,7 +58,7 @@ int main(void) {
   float tank1HalfW = tankWidth / 2;
   float tank1HalfH = tankHeight / 2;
   Vector2 tank1Origin = {tank1HalfW, tank1HalfH};
-  signed short int tank1Lives = maxLives;
+  signed int tank1Lives = maxLives;
 
   int tank2XPos = initialTank2XPos;
   int tank2YPos = initialTank2YPos;
@@ -302,7 +302,6 @@ int main(void) {
           tank1Bullets[i].active = false;
           tank1Bullets[i].lifetime = 0.0f;
           if (tank2Lives <= 0) {
-            tank2Color = PURPLE;
             winner = 1;
             currentScene = EndScene;
           }
@@ -317,7 +316,6 @@ int main(void) {
           tank2Bullets[i].active = false;
           tank2Bullets[i].lifetime = 0.0f;
           if (tank1Lives <= 0) {
-            tank1Color = PURPLE;
             winner = 2;
             currentScene = EndScene;
           }
@@ -391,6 +389,13 @@ int main(void) {
                       tank2Bullets[i].color);
         }
       }
+
+      // Drawing UI
+      DrawText(TextFormat("P1 Lives: %i", tank1Lives), 10, 10, 20,
+               BLACK);
+      DrawText(TextFormat("P2 Lives: %i", tank2Lives), windowWidth - MeasureText("P2 Lives: 3", 20) - 10, 10, 20,
+               BLACK);
+
       break;
     }
 
