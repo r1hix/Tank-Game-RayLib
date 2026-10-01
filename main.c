@@ -16,9 +16,14 @@ short unsigned int winner = 0;
 const float tankWidth = 100.0f;
 const float tankHeight = 70.0f;
 const float tankCollisionRad = 44.0f;
-Color tank1Color = BLUE;
-Color tank2Color = RED;
-
+const float tankFlashTime = 0.15f;
+const Color initialTank1Color = BLUE;
+const Color initialTank2Color = RED;
+Color tank1Color = initialTank1Color;
+Color tank2Color = initialTank2Color;
+Color tankFlashColor = PURPLE;
+float tank1FlashTimer = 0.0f;
+float tank2FlashTimer = 0.0f;
 // --- Initial Tank Positions ---
 #define maxLives 3
 
@@ -322,9 +327,9 @@ int main(void) {
                   tank1Bullets[i].position, tank1Bullets[i].size,
                   tank2Bullets[j].position, tank2Bullets[j].size)) {
             tank1Bullets[i].active = false;
-            tank2Bullets[j].active = false;
-
             tank1Bullets[i].lifetime = 0.0f;
+
+            tank2Bullets[j].active = false;
             tank2Bullets[j].lifetime = 0.0f;
           }
         }
@@ -338,6 +343,7 @@ int main(void) {
                 tank1Bullets[i].position, tank1Bullets[i].size,
                 (Vector2){tank2.x, tank2.y}, tankCollisionRad)) {
           tank2Lives -= 1;
+          tank2FlashTimer = tankFlashTime;
           tank1Bullets[i].active = false;
           tank1Bullets[i].lifetime = 0.0f;
           if (tank2Lives <= 0) {
@@ -352,6 +358,7 @@ int main(void) {
                 tank2Bullets[i].position, tank2Bullets[i].size,
                 (Vector2){tank1.x, tank1.y}, tankCollisionRad)) {
           tank1Lives -= 1;
+          tank1FlashTimer = tankFlashTime;
           tank2Bullets[i].active = false;
           tank2Bullets[i].lifetime = 0.0f;
           if (tank1Lives <= 0) {
@@ -360,6 +367,22 @@ int main(void) {
           }
         }
       }
+
+      // Flashing Logic
+      if (tank1FlashTimer > 0.0f) {
+        tank1FlashTimer -= GetFrameTime();
+        tank1Color = tankFlashColor;
+      } else {
+        tank1Color = initialTank1Color;
+      }
+
+      if (tank2FlashTimer > 0.0f) {
+        tank2FlashTimer -= GetFrameTime();
+        tank2Color = tankFlashColor;
+      } else {
+        tank2Color = initialTank2Color;
+      }
+
       break;
     }
 
@@ -379,11 +402,15 @@ int main(void) {
         tank1.y = initialTank1YPos;
         tank1Rotation = initialTank1Rotation;
         tank1Lives = maxLives;
+        tank1FlashTimer = 0.0f;
+        tank1Color = initialTank1Color;
 
         tank2.x = initialTank2XPos;
         tank2.y = initialTank2YPos;
         tank2Rotation = initialTank2Rotation;
         tank2Lives = maxLives;
+        tank2FlashTimer = 0.0f;
+        tank2Color = initialTank2Color;
 
         currentScene = GameScene;
       }
