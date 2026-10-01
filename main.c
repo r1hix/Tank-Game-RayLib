@@ -56,7 +56,7 @@ int main(void) {
   // --- Initialize Window ---
   InitWindow(windowWidth, windowHeight, "Tank Game");
   SetTargetFPS(60);
-  Scene currentScene = GameScene;
+  Scene currentScene = IntroScene;
 
   // --- Game Loop ---
   while (!WindowShouldClose()) {
@@ -66,6 +66,10 @@ int main(void) {
 
     // Scene: Intro
     case IntroScene: {
+      if (IsKeyPressed(KEY_SPACE)) {
+        currentScene = GameScene;
+      }
+      break;
     }
 
     // Scene: Game
@@ -193,8 +197,6 @@ int main(void) {
         }
       }
 
-      // Scene: End
-
       // --- Boundary Constraints ---
 
       // Tank 1
@@ -285,10 +287,12 @@ int main(void) {
           tank1Color = PURPLE;
         }
       }
+      break;
     }
 
     // Scene: End
     case EndScene: {
+      break;
     }
     }
 
@@ -300,6 +304,13 @@ int main(void) {
 
     // Scene: Intro
     case IntroScene: {
+      DrawText("Tank Game", windowWidth / 2 - MeasureText("Tank Game", 40) / 2,
+               windowHeight / 2 - 40, 40, BLACK);
+
+      DrawText("Press space to start",
+               windowWidth / 2 - MeasureText("Press space to start", 20) / 2,
+               windowHeight / 2 + 40, 20, BLACK);
+      break;
     }
 
     // Scene: Game
@@ -322,10 +333,12 @@ int main(void) {
                       tank2Bullets[i].color);
         }
       }
+      break;
     }
 
     // Scene: End
     case EndScene: {
+      break;
     }
     }
 
