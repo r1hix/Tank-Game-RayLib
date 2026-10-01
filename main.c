@@ -20,11 +20,15 @@ Color tank1Color = BLUE;
 Color tank2Color = RED;
 
 // --- Initial Tank Positions ---
+#define maxLives 3
+
+// Tank 1
 const float speed = 3.0f;
 const int initialTank1XPos = 50;
 const int initialTank1YPos = (windowHeight - tankHeight) / 2;
 const float initialTank1Rotation = 0.0f;
 
+// Tank 2
 const int initialTank2XPos = windowWidth - initialTank1XPos - tankWidth;
 const int initialTank2YPos = initialTank1YPos;
 const float initialTank2Rotation = 180.0f;
@@ -54,11 +58,13 @@ int main(void) {
   float tank1HalfW = tankWidth / 2;
   float tank1HalfH = tankHeight / 2;
   Vector2 tank1Origin = {tank1HalfW, tank1HalfH};
+  signed short int tank1Lives = maxLives;
 
   int tank2XPos = initialTank2XPos;
   int tank2YPos = initialTank2YPos;
   Vector2 tank2Origin = tank1Origin;
   float tank2Rotation = initialTank2Rotation;
+  signed short int tank2Lives = maxLives;
 
   // --- Tank Rectangles ---
   Rectangle tank1 = {tank1XPos, tank1YPos, tankWidth, tankHeight};
@@ -271,14 +277,17 @@ int main(void) {
 
       // Bullet on Bullet Collision
       for (int i = 0; i < maxBullets; i++) {
-        if (CheckCollisionCircles(
-                tank1Bullets[i].position, tank1Bullets[i].size,
-                tank2Bullets[i].position, tank2Bullets[i].size)) {
-          tank1Bullets[i].active = false;
-          tank2Bullets[i].active = false;
+        for (int j = 0; j < maxBullets; j++) {
+          if (tank1Bullets[i].active && tank2Bullets[j].active &&
+              CheckCollisionCircles(
+                  tank1Bullets[i].position, tank1Bullets[i].size,
+                  tank2Bullets[j].position, tank2Bullets[j].size)) {
+            tank1Bullets[i].active = false;
+            tank2Bullets[j].active = false;
 
-          tank1Bullets[i].lifetime = 0.0f;
-          tank2Bullets[i].lifetime = 0.0f;
+            tank1Bullets[i].lifetime = 0.0f;
+            tank2Bullets[j].lifetime = 0.0f;
+          }
         }
       }
 
@@ -289,9 +298,14 @@ int main(void) {
             CheckCollisionCircles(
                 tank1Bullets[i].position, tank1Bullets[i].size,
                 (Vector2){tank2.x, tank2.y}, tankCollisionRad)) {
-          tank2Color = PURPLE;
-          winner = 1;
-          currentScene = EndScene;
+          tank2Lives -= 1;
+          tank1Bullets[i].active = false;
+          tank1Bullets[i].lifetime = 0.0f;
+          if (tank2Lives <= 0) {
+            tank2Color = PURPLE;
+            winner = 1;
+            currentScene = EndScene;
+          }
         }
 
         // Tank2Bullets -> Tank1
@@ -299,9 +313,14 @@ int main(void) {
             CheckCollisionCircles(
                 tank2Bullets[i].position, tank2Bullets[i].size,
                 (Vector2){tank1.x, tank1.y}, tankCollisionRad)) {
-          tank1Color = PURPLE;
-          winner = 2;
-          currentScene = EndScene;
+          tank1Lives -= 1;
+          tank2Bullets[i].active = false;
+          tank2Bullets[i].lifetime = 0.0f;
+          if (tank1Lives <= 0) {
+            tank1Color = PURPLE;
+            winner = 2;
+            currentScene = EndScene;
+          }
         }
       }
       break;
@@ -322,10 +341,13 @@ int main(void) {
         tank1.x = initialTank1XPos;
         tank1.y = initialTank1YPos;
         tank1Rotation = initialTank1Rotation;
+        tank1Lives = maxLives;
 
         tank2.x = initialTank2XPos;
         tank2.y = initialTank2YPos;
         tank2Rotation = initialTank2Rotation;
+        tank2Lives = maxLives;
+
         currentScene = GameScene;
       }
       break;
