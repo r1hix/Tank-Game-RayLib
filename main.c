@@ -19,6 +19,16 @@ const float tankCollisionRad = 44.0f;
 Color tank1Color = BLUE;
 Color tank2Color = RED;
 
+// --- Initial Tank Positions ---
+const float speed = 3.0f;
+const int initialTank1XPos = 50;
+const int initialTank1YPos = (windowHeight - tankHeight) / 2;
+const float initialTank1Rotation = 0.0f;
+
+const int initialTank2XPos = windowWidth - initialTank1XPos - tankWidth;
+const int initialTank2YPos = initialTank1YPos;
+const float initialTank2Rotation = 180.0f;
+
 // --- Bullets ---
 #define maxBullets 2
 #define bulletSpeed 5
@@ -38,18 +48,17 @@ Bullet tank2Bullets[maxBullets];
 int main(void) {
 
   // --- Initial Tank Positions ---
-  int tank1XPos = 50;
-  int tank1YPos = (windowHeight - tankHeight) / 2;
-  float tank1Rotation = 0.0f;
-  float speed = 3.0f;
+  int tank1XPos = initialTank1XPos;
+  int tank1YPos = initialTank1YPos;
+  float tank1Rotation = initialTank1Rotation;
   float tank1HalfW = tankWidth / 2;
   float tank1HalfH = tankHeight / 2;
   Vector2 tank1Origin = {tank1HalfW, tank1HalfH};
 
-  int tank2XPos = windowWidth - tank1XPos - tankWidth;
-  int tank2YPos = tank1YPos;
+  int tank2XPos = initialTank2XPos;
+  int tank2YPos = initialTank2YPos;
   Vector2 tank2Origin = tank1Origin;
-  float tank2Rotation = 180.0f;
+  float tank2Rotation = initialTank2Rotation;
 
   // --- Tank Rectangles ---
   Rectangle tank1 = {tank1XPos, tank1YPos, tankWidth, tankHeight};
@@ -276,7 +285,8 @@ int main(void) {
       // Bullet on Tank Collision
       for (int i = 0; i < maxBullets; i++) {
         // Tank1Bullets -> Tank2
-        if (CheckCollisionCircles(
+        if (tank1Bullets[i].active &&
+            CheckCollisionCircles(
                 tank1Bullets[i].position, tank1Bullets[i].size,
                 (Vector2){tank2.x, tank2.y}, tankCollisionRad)) {
           tank2Color = PURPLE;
@@ -285,7 +295,8 @@ int main(void) {
         }
 
         // Tank2Bullets -> Tank1
-        if (CheckCollisionCircles(
+        if (tank2Bullets[i].active &&
+            CheckCollisionCircles(
                 tank2Bullets[i].position, tank2Bullets[i].size,
                 (Vector2){tank1.x, tank1.y}, tankCollisionRad)) {
           tank1Color = PURPLE;
@@ -299,6 +310,22 @@ int main(void) {
     // Scene: End
     case EndScene: {
       if (IsKeyPressed(KEY_SPACE)) {
+        winner = 0;
+
+        for (int i = 0; i < maxBullets; i++) {
+          tank1Bullets[i].active = false;
+          tank1Bullets[i].lifetime = 0.0f;
+          tank2Bullets[i].active = false;
+          tank2Bullets[i].lifetime = 0.0f;
+        }
+
+        tank1.x = initialTank1XPos;
+        tank1.y = initialTank1YPos;
+        tank1Rotation = initialTank1Rotation;
+
+        tank2.x = initialTank2XPos;
+        tank2.y = initialTank2YPos;
+        tank2Rotation = initialTank2Rotation;
         currentScene = GameScene;
       }
       break;
