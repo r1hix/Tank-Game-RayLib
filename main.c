@@ -10,6 +10,8 @@ typedef enum Scene { IntroScene, GameScene, EndScene } Scene;
 const int windowWidth = 800;
 const int windowHeight = 800;
 
+short unsigned int winner = 0;
+
 // --- Tank Dimensions ---
 const float tankWidth = 100.0f;
 const float tankHeight = 70.0f;
@@ -278,6 +280,8 @@ int main(void) {
                 tank1Bullets[i].position, tank1Bullets[i].size,
                 (Vector2){tank2.x, tank2.y}, tankCollisionRad)) {
           tank2Color = PURPLE;
+          winner = 1;
+          currentScene = EndScene;
         }
 
         // Tank2Bullets -> Tank1
@@ -285,6 +289,8 @@ int main(void) {
                 tank2Bullets[i].position, tank2Bullets[i].size,
                 (Vector2){tank1.x, tank1.y}, tankCollisionRad)) {
           tank1Color = PURPLE;
+          winner = 2;
+          currentScene = EndScene;
         }
       }
       break;
@@ -292,6 +298,9 @@ int main(void) {
 
     // Scene: End
     case EndScene: {
+      if (IsKeyPressed(KEY_SPACE)) {
+        currentScene = GameScene;
+      }
       break;
     }
     }
@@ -338,6 +347,19 @@ int main(void) {
 
     // Scene: End
     case EndScene: {
+
+      if (winner == 1) {
+        DrawText("Player 1 Wins!",
+                 windowWidth / 2 - MeasureText("Player 2 Wins!", 40) / 2,
+                 windowHeight / 2 - 40, 40, BLACK);
+      } else {
+        DrawText("Player 2 Wins!",
+                 windowWidth / 2 - MeasureText("Player 2 Wins!", 40) / 2,
+                 windowHeight / 2 - 40, 40, BLACK);
+      }
+      DrawText("Press space to restart",
+               windowWidth / 2 - MeasureText("Press space to restart", 20) / 2,
+               windowHeight / 2 + 40, 20, BLACK);
       break;
     }
     }
