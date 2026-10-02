@@ -78,6 +78,15 @@ int main(void) {
   // --- Initialize Window ---
   InitWindow(windowWidth, windowHeight, "Tank Game");
   SetTargetFPS(60);
+
+  // --- Sound Effects ---
+  InitAudioDevice();
+
+  Sound shootSFX = LoadSound("resources/shoot.wav");
+  Sound tankExplosionSFX = LoadSound("resources/tankExplosion.wav");
+  Sound bulletExplosionSFX = LoadSound("resources/bulletExplosion.wav");
+  Sound bulletBounceSFX = LoadSound("resources/bulletBounce.wav");
+
   Scene currentScene = IntroScene;
 
   // --- Game Loop ---
@@ -486,7 +495,16 @@ int main(void) {
 
     EndDrawing();
   }
+
   // --- Cleanup ---
+
+  UnloadSound(shootSFX);
+  UnloadSound(tankExplosionSFX);
+  UnloadSound(bulletExplosionSFX);
+  UnloadSound(bulletBounceSFX);
+
+  CloseAudioDevice();
   CloseWindow();
+
   return 0;
 }
