@@ -86,6 +86,7 @@ int main(void) {
   Sound tankExplosionSFX = LoadSound("resources/tankExplosion.wav");
   Sound bulletExplosionSFX = LoadSound("resources/bulletExplosion.wav");
   Sound bulletBounceSFX = LoadSound("resources/bulletBounce.wav");
+  Sound gameOverSFX = LoadSound("resources/gameOver.wav");
 
   Scene currentScene = IntroScene;
 
@@ -502,6 +503,7 @@ int main(void) {
   UnloadSound(tankExplosionSFX);
   UnloadSound(bulletExplosionSFX);
   UnloadSound(bulletBounceSFX);
+  UnloadSound(gameOverSFX);
 
   CloseAudioDevice();
   CloseWindow();
