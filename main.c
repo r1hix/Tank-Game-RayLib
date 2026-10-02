@@ -17,18 +17,21 @@ const float tankWidth = 100.0f;
 const float tankHeight = 70.0f;
 const float tankCollisionRad = 44.0f;
 const float tankFlashTime = 0.15f;
+const float tankSpeed = 3.0f;
+const float tankRotationSpeed = 2.0f;
+Vector2 tankOrigin = {tankWidth / 2, tankWidth / 2};
 const Color initialTank1Color = BLUE;
 const Color initialTank2Color = RED;
-Color tank1Color = initialTank1Color;
-Color tank2Color = initialTank2Color;
+Color tank1Color = initialTank1Color; //
+Color tank2Color = initialTank2Color; //
 Color tankFlashColor = PURPLE;
-float tank1FlashTimer = 0.0f;
+float tank1FlashTimer = 0.0f; //
 float tank2FlashTimer = 0.0f;
 // --- Initial Tank Positions ---
 #define maxLives 3
 
 // Tank 1
-const float speed = 3.0f;
+
 const int initialTank1XPos = 50;
 const int initialTank1YPos = (windowHeight - tankHeight) / 2;
 const float initialTank1Rotation = 0.0f;
@@ -41,6 +44,7 @@ const float initialTank2Rotation = 180.0f;
 // --- Bullets ---
 #define maxBullets 2
 #define bulletSpeed 5
+#define bulletSize 10
 
 typedef struct Bullet {
   bool active;
@@ -54,26 +58,202 @@ typedef struct Bullet {
 Bullet tank1Bullets[maxBullets];
 Bullet tank2Bullets[maxBullets];
 
+typedef struct TankControls {
+  int key_Up, key_Down, key_Left, key_Right, key_Fire;
+} TankControls;
+
+typedef struct Tank {
+  Vector2 position, origin;
+  float width, height, halfW, halfH, radius, rotation, speed, flashTimer;
+  int lives;
+  Color currentColor, baseColor;
+  Bullet bullets[maxBullets];
+  TankControls controls;
+  Rectangle body;
+} Tank;
+
+typedef struct Sounds {
+  Sound shootSFX, tankExplosionSFX, bulletExplosionSFX, bulletBounceSFX,
+      gameOverSFX, gameStartSFX;
+} Sounds;
+
+Sounds sounds;
+
+// Functions
+
+void UpdateTank(Tank *tank) {
+
+  float rad = DEG2RAD * tank->rotation;
+  float dx = cosf(rad);
+  float dy = sinf(rad);
+
+  // Tank Movement
+  if (IsKeyDown(tank->controls.key_Up)) {
+    tank->body.x += tankSpeed * dx;
+    tank->body.y += tankSpeed * dy;
+  }
+
+  if (IsKeyDown(tank->controls.key_Down)) {
+    tank->body.x -= tankSpeed * dx;
+    tank->body.y -= tankSpeed * dy;
+  }
+
+  if (IsKeyDown(tank->controls.key_Left))
+    tank->rotation -= tankRotationSpeed;
+
+  if (IsKeyDown(tank->controls.key_Right))
+    tank->rotation += tankRotationSpeed;
+
+  // Tank 1 Shooting
+  if (IsKeyPressed(tank->controls.key_Fire)) {
+    for (int i = 0; i < maxBullets; i++) {
+      if (!tank->bullets[i].active) {
+        float offset = (tank->width / 2) + tank->bullets->size;
+        Vector2 spawnLocation = {tank->body.x + (dx * offset),
+                                 tank->body.y + (dy * offset)};
+        Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
+
+        tank->bullets[i].size = bulletSize;
+        tank->bullets[i].position = spawnLocation;
+        tank->bullets[i].velocity = velocity;
+        tank->bullets[i].color = BLACK;
+        tank->bullets[i].active = true;
+        tank->bullets[i].lifetime = 0.0f;
+
+        PlaySound(sounds.shootSFX);
+        break;
+      }
+    }
+  }
+
+  // --- Updating Bullets ---
+
+  // Tank1
+  for (int i = 0; i < maxBullets; i++) {
+    if (tank->bullets[i].active) {
+      tank->bullets[i].position.x += tank->bullets[i].velocity.x;
+      tank->bullets[i].position.y += tank->bullets[i].velocity.y;
+
+      tank->bullets[i].lifetime += GetFrameTime();
+      if (tank->bullets[i].lifetime > 2) {
+        tank->bullets[i].active = false;
+        tank->bullets[i].lifetime = 0.0f;
+      }
+    }
+  }
+
+  // --- Boundary Constraints ---
+
+  // Tank 1
+  tank->halfW = (tankWidth / 2) * fabsf(cosf(tank->radius)) +
+                (tankHeight / 2) * fabsf(sinf(tank->radius));
+  tank->halfH = (tankWidth / 2) * fabsf(sinf(tank->radius)) +
+                (tankHeight / 2) * fabsf(cosf(tank->radius));
+
+  if (tank->body.x - tank->halfW < 0)
+    tank->body.x = tank->halfW;
+  if (tank->body.x + tank->halfW > windowWidth)
+    tank->body.x = windowWidth - tank->halfW;
+  if (tank->body.y - tank->halfH < 0)
+    tank->body.y = tank->halfH;
+  if (tank->body.y + tank->halfH > windowHeight)
+    tank->body.y = windowHeight - tank->halfH;
+
+  // Bullets
+  for (int i = 0; i < maxBullets; i++) {
+    if (tank->bullets[i].position.x < 0) {
+      tank->bullets[i].position.x = 0;
+      tank->bullets[i].velocity.x = -tank->bullets[i].velocity.x;
+      PlaySound(sounds.bulletBounceSFX);
+    }
+    if (tank->bullets[i].position.x > windowWidth) {
+      tank->bullets[i].position.x = windowWidth;
+      tank->bullets[i].velocity.x = -tank->bullets[i].velocity.x;
+      PlaySound(sounds.bulletBounceSFX);
+    }
+    if (tank->bullets[i].position.y < 0) {
+      tank->bullets[i].position.y = 0;
+      tank->bullets[i].velocity.y = -tank->bullets[i].velocity.y;
+      PlaySound(sounds.bulletBounceSFX);
+    }
+    if (tank->bullets[i].position.y > windowHeight) {
+      tank->bullets[i].position.y = windowHeight;
+      tank->bullets[i].velocity.y = -tank->bullets[i].velocity.y;
+      PlaySound(sounds.bulletBounceSFX);
+    }
+  }
+}
+
+void CheckTankTankCollision(Tank *tank) {
+  // --- Tank Collisions ---
+  if (CheckCollisionRecs(tank1Rec, tank2Rec)) {
+    float overlapX = (tank1HalfW + tank2HalfW) - fabsf(tank1Rec.x - tank2Rec.x);
+    float overlapY = (tank1HalfH + tank2HalfH) - fabsf(tank1Rec.y - tank2Rec.y);
+
+    if (overlapX < overlapY) {
+      if (tank1Rec.x < tank2Rec.x) {
+        tank1Rec.x -= overlapX / 2;
+        tank2Rec.x += overlapX / 2;
+      } else {
+        tank1Rec.x += overlapX / 2;
+        tank2Rec.x -= overlapX / 2;
+      }
+    } else {
+      if (tank1Rec.y < tank2Rec.y) {
+        tank1Rec.y -= overlapY / 2;
+        tank2Rec.y += overlapY / 2;
+      } else {
+        tank1Rec.y += overlapY / 2;
+        tank2Rec.y -= overlapY / 2;
+      }
+    }
+  }
+}
+
 int main(void) {
 
-  // --- Initial Tank Positions ---
-  int tank1XPos = initialTank1XPos;
-  int tank1YPos = initialTank1YPos;
-  float tank1Rotation = initialTank1Rotation;
-  float tank1HalfW = tankWidth / 2;
-  float tank1HalfH = tankHeight / 2;
-  Vector2 tank1Origin = {tank1HalfW, tank1HalfH};
-  signed int tank1Lives = maxLives;
+  Tank tank1 = {.position = {initialTank1XPos, initialTank1YPos},
+                .width = tankWidth,
+                .height = tankHeight,
+                .radius = tankCollisionRad,
+                .origin = tankOrigin,
+                .rotation = initialTank1Rotation,
+                .speed = tankSpeed,
+                .flashTimer = tankFlashTime,
+                .lives = maxLives,
+                .currentColor = initialTank1Color,
+                .baseColor = initialTank1Color,
+                .controls = {KEY_W, KEY_S, KEY_A, KEY_D, KEY_LEFT_SHIFT},
+                .body = {.x = initialTank1XPos,
+                         .y = initialTank1YPos,
+                         .width = tankWidth,
+                         .height = tankHeight},
+                .halfW = (tankWidth / 2) * fabsf(cosf(initialTank1Rotation)) +
+                         (tankHeight / 2) * fabsf(sinf(initialTank1Rotation)),
+                .halfH = (tankWidth / 2) * fabsf(sinf(initialTank1Rotation)) +
+                         (tankHeight / 2) * fabsf(cosf(initialTank1Rotation))};
 
-  int tank2XPos = initialTank2XPos;
-  int tank2YPos = initialTank2YPos;
-  Vector2 tank2Origin = tank1Origin;
-  float tank2Rotation = initialTank2Rotation;
-  signed short int tank2Lives = maxLives;
-
-  // --- Tank Rectangles ---
-  Rectangle tank1 = {tank1XPos, tank1YPos, tankWidth, tankHeight};
-  Rectangle tank2 = {tank2XPos, tank2YPos, tankWidth, tankHeight};
+  Tank tank2 = {
+      .position = {initialTank2XPos, initialTank2YPos},
+      .width = tankWidth,
+      .height = tankHeight,
+      .radius = tankCollisionRad,
+      .origin = tankOrigin,
+      .rotation = initialTank2Rotation,
+      .speed = tankSpeed,
+      .flashTimer = tankFlashTime,
+      .lives = maxLives,
+      .currentColor = initialTank2Color,
+      .baseColor = initialTank2Color,
+      .controls = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_RIGHT_SHIFT},
+      .body = {.x = initialTank2XPos,
+               .y = initialTank2YPos,
+               .width = tankWidth,
+               .height = tankHeight},
+      .halfW = (tankWidth / 2) * fabsf(cosf(initialTank2Rotation)) +
+               (tankHeight / 2) * fabsf(sinf(initialTank2Rotation)),
+      .halfH = (tankWidth / 2) * fabsf(sinf(initialTank2Rotation)) +
+               (tankHeight / 2) * fabsf(cosf(initialTank2Rotation))};
 
   // --- Initialize Window ---
   InitWindow(windowWidth, windowHeight, "Tank Game");
@@ -82,12 +262,12 @@ int main(void) {
   // --- Sound Effects ---
   InitAudioDevice();
 
-  Sound shootSFX = LoadSound("resources/shoot.wav");
-  Sound tankExplosionSFX = LoadSound("resources/tankExplosion.wav");
-  Sound bulletExplosionSFX = LoadSound("resources/bulletExplosion.wav");
-  Sound bulletBounceSFX = LoadSound("resources/bulletBounce.wav");
-  Sound gameOverSFX = LoadSound("resources/gameOver.wav");
-  Sound gameStartSFX = LoadSound("resources/gameStart.wav");
+  sounds.shootSFX = LoadSound("resources/shoot.wav");
+  sounds.tankExplosionSFX = LoadSound("resources/tankExplosion.wav");
+  sounds.bulletExplosionSFX = LoadSound("resources/bulletExplosion.wav");
+  sounds.bulletBounceSFX = LoadSound("resources/bulletBounce.wav");
+  sounds.gameOverSFX = LoadSound("resources/gameOver.wav");
+  sounds.gameStartSFX = LoadSound("resources/gameStart.wav");
 
   Scene currentScene = IntroScene;
 
@@ -114,16 +294,16 @@ int main(void) {
         float dx = cosf(DEG2RAD * tank1Rotation);
         float dy = sinf(DEG2RAD * tank1Rotation);
 
-        tank1.x += speed * dx;
-        tank1.y += speed * dy;
+        tank1Rec.x += speed * dx;
+        tank1Rec.y += speed * dy;
       }
 
       if (IsKeyDown(KEY_S)) {
         float dx = cosf(DEG2RAD * tank1Rotation);
         float dy = sinf(DEG2RAD * tank1Rotation);
 
-        tank1.x -= speed * dx;
-        tank1.y -= speed * dy;
+        tank1Rec.x -= speed * dx;
+        tank1Rec.y -= speed * dy;
       }
 
       if (IsKeyDown(KEY_A))
@@ -137,16 +317,16 @@ int main(void) {
         float dx = cosf(DEG2RAD * tank2Rotation);
         float dy = sinf(DEG2RAD * tank2Rotation);
 
-        tank2.x += speed * dx;
-        tank2.y += speed * dy;
+        tank2Rec.x += speed * dx;
+        tank2Rec.y += speed * dy;
       }
 
       if (IsKeyDown(KEY_DOWN)) {
         float dx = cosf(DEG2RAD * tank2Rotation);
         float dy = sinf(DEG2RAD * tank2Rotation);
 
-        tank2.x -= speed * dx;
-        tank2.y -= speed * dy;
+        tank2Rec.x -= speed * dx;
+        tank2Rec.y -= speed * dy;
       }
 
       if (IsKeyDown(KEY_LEFT))
@@ -163,8 +343,8 @@ int main(void) {
             float dx = cosf(rad);
             float dy = sinf(rad);
             float offset = (tankWidth / 2) + tank1Bullets->size;
-            Vector2 spawnLocation = {tank1.x + (dx * offset),
-                                     tank1.y + (dy * offset)};
+            Vector2 spawnLocation = {tank1Rec.x + (dx * offset),
+                                     tank1Rec.y + (dy * offset)};
             Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
 
             tank1Bullets[i].size = 10.0f;
@@ -188,8 +368,8 @@ int main(void) {
             float dx = cosf(rad);
             float dy = sinf(rad);
             float offset = (tankWidth / 2) + tank2Bullets->size;
-            Vector2 spawnLocation = {tank2.x + (dx * offset),
-                                     tank2.y + (dy * offset)};
+            Vector2 spawnLocation = {tank2Rec.x + (dx * offset),
+                                     tank2Rec.y + (dy * offset)};
             Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
 
             tank2Bullets[i].size = 10.0f;
@@ -244,14 +424,14 @@ int main(void) {
       tank1HalfH = (tankWidth / 2) * fabsf(sinf(tank1Rad)) +
                    (tankHeight / 2) * fabsf(cosf(tank1Rad));
 
-      if (tank1.x - tank1HalfW < 0)
-        tank1.x = tank1HalfW;
-      if (tank1.x + tank1HalfW > windowWidth)
-        tank1.x = windowWidth - tank1HalfW;
-      if (tank1.y - tank1HalfH < 0)
-        tank1.y = tank1HalfH;
-      if (tank1.y + tank1HalfH > windowHeight)
-        tank1.y = windowHeight - tank1HalfH;
+      if (tank1Rec.x - tank1HalfW < 0)
+        tank1Rec.x = tank1HalfW;
+      if (tank1Rec.x + tank1HalfW > windowWidth)
+        tank1Rec.x = windowWidth - tank1HalfW;
+      if (tank1Rec.y - tank1HalfH < 0)
+        tank1Rec.y = tank1HalfH;
+      if (tank1Rec.y + tank1HalfH > windowHeight)
+        tank1Rec.y = windowHeight - tank1HalfH;
 
       // Tank 2
       float tank2Rad = DEG2RAD * tank2Rotation;
@@ -260,14 +440,14 @@ int main(void) {
       float tank2HalfH = (tankWidth / 2) * fabsf(sinf(tank2Rad)) +
                          (tankHeight / 2) * fabsf(cosf(tank2Rad));
 
-      if (tank2.x - tank2HalfW < 0)
-        tank2.x = tank2HalfW;
-      if (tank2.x + tank2HalfW > windowWidth)
-        tank2.x = windowWidth - tank2HalfW;
-      if (tank2.y - tank2HalfH < 0)
-        tank2.y = tank2HalfH;
-      if (tank2.y + tank2HalfH > windowHeight)
-        tank2.y = windowHeight - tank2HalfH;
+      if (tank2Rec.x - tank2HalfW < 0)
+        tank2Rec.x = tank2HalfW;
+      if (tank2Rec.x + tank2HalfW > windowWidth)
+        tank2Rec.x = windowWidth - tank2HalfW;
+      if (tank2Rec.y - tank2HalfH < 0)
+        tank2Rec.y = tank2HalfH;
+      if (tank2Rec.y + tank2HalfH > windowHeight)
+        tank2Rec.y = windowHeight - tank2HalfH;
 
       // Bullets
       for (int i = 0; i < maxBullets; i++) {
@@ -318,25 +498,27 @@ int main(void) {
 
       // --- Tank Collisions ---
 
-      if (CheckCollisionRecs(tank1, tank2)) {
-        float overlapX = (tank1HalfW + tank2HalfW) - fabsf(tank1.x - tank2.x);
-        float overlapY = (tank1HalfH + tank2HalfH) - fabsf(tank1.y - tank2.y);
+      if (CheckCollisionRecs(tank1Rec, tank2Rec)) {
+        float overlapX =
+            (tank1HalfW + tank2HalfW) - fabsf(tank1Rec.x - tank2Rec.x);
+        float overlapY =
+            (tank1HalfH + tank2HalfH) - fabsf(tank1Rec.y - tank2Rec.y);
 
         if (overlapX < overlapY) {
-          if (tank1.x < tank2.x) {
-            tank1.x -= overlapX / 2;
-            tank2.x += overlapX / 2;
+          if (tank1Rec.x < tank2Rec.x) {
+            tank1Rec.x -= overlapX / 2;
+            tank2Rec.x += overlapX / 2;
           } else {
-            tank1.x += overlapX / 2;
-            tank2.x -= overlapX / 2;
+            tank1Rec.x += overlapX / 2;
+            tank2Rec.x -= overlapX / 2;
           }
         } else {
-          if (tank1.y < tank2.y) {
-            tank1.y -= overlapY / 2;
-            tank2.y += overlapY / 2;
+          if (tank1Rec.y < tank2Rec.y) {
+            tank1Rec.y -= overlapY / 2;
+            tank2Rec.y += overlapY / 2;
           } else {
-            tank1.y += overlapY / 2;
-            tank2.y -= overlapY / 2;
+            tank1Rec.y += overlapY / 2;
+            tank2Rec.y -= overlapY / 2;
           }
         }
       }
@@ -367,7 +549,7 @@ int main(void) {
         if (tank1Bullets[i].active &&
             CheckCollisionCircles(
                 tank1Bullets[i].position, tank1Bullets[i].size,
-                (Vector2){tank2.x, tank2.y}, tankCollisionRad)) {
+                (Vector2){tank2Rec.x, tank2Rec.y}, tankCollisionRad)) {
           tank2Lives -= 1;
           tank2FlashTimer = tankFlashTime;
           tank1Bullets[i].active = false;
@@ -384,7 +566,7 @@ int main(void) {
         if (tank2Bullets[i].active &&
             CheckCollisionCircles(
                 tank2Bullets[i].position, tank2Bullets[i].size,
-                (Vector2){tank1.x, tank1.y}, tankCollisionRad)) {
+                (Vector2){tank1Rec.x, tank1Rec.y}, tankCollisionRad)) {
           tank1Lives -= 1;
           tank1FlashTimer = tankFlashTime;
           tank2Bullets[i].active = false;
@@ -429,15 +611,15 @@ int main(void) {
           tank2Bullets[i].lifetime = 0.0f;
         }
 
-        tank1.x = initialTank1XPos;
-        tank1.y = initialTank1YPos;
+        tank1Rec.x = initialTank1XPos;
+        tank1Rec.y = initialTank1YPos;
         tank1Rotation = initialTank1Rotation;
         tank1Lives = maxLives;
         tank1FlashTimer = 0.0f;
         tank1Color = initialTank1Color;
 
-        tank2.x = initialTank2XPos;
-        tank2.y = initialTank2YPos;
+        tank2Rec.x = initialTank2XPos;
+        tank2Rec.y = initialTank2YPos;
         tank2Rotation = initialTank2Rotation;
         tank2Lives = maxLives;
         tank2FlashTimer = 0.0f;
@@ -470,8 +652,8 @@ int main(void) {
     // Scene: Game
     case GameScene: {
       // Drawing Tanks
-      DrawRectanglePro(tank1, tank1Origin, tank1Rotation, tank1Color);
-      DrawRectanglePro(tank2, tank2Origin, tank2Rotation, tank2Color);
+      DrawRectanglePro(tank1Rec, tank1Origin, tank1Rotation, tank1Color);
+      DrawRectanglePro(tank2Rec, tank2Origin, tank2Rotation, tank2Color);
 
       // Drawing Bullets
       for (int i = 0; i < maxBullets; i++) {
