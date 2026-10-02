@@ -8,8 +8,9 @@ A 2D local two-player tank game built from scratch in C using [raylib](https://w
 ## Requirements
 
 - C compiler (`clang` or `gcc`)
-- `raylib`
-- `pkg-config`
+- `raylib` (v5.0+)
+- `make` (or `mingw32-make` on Windows)
+- `pkg-config` (macOS / Linux)
 
 ## Build & Run
 
@@ -36,7 +37,11 @@ make clean
 - **Rotational Movement**: Direction-based forward/backward translation based on tank heading angle.
 - **Dynamic Bounding Constraints**: Screen boundary collisions calculated from the tank's rotated bounding box (AABB).
 - **Shooting & Ballistics**: Up to 2 active bullets per tank with automatic lifetime despawn after 2 seconds.
-- **Collision Detection**:
-  - **Bullet vs. Bullet**: Direct projectile collisions neutralize both shots.
-  - **Bullet vs. Tank**: Direct hits register on the opposing tank, changing its color to purple.
+- **Collision Detection & Feedback**:
+  - **Bullet vs. Bullet**: Direct projectile collisions neutralize both shots with an explosion effect.
+  - **Bullet vs. Tank**: Direct hits register on the opposing tank with damage flash feedback and life counters (3 lives per tank).
+  - **Bullet vs. Wall**: Screen edges ricochet active bullets with bounce audio.
+- **Sound Effects (SFX)**: Full audio feedback for tank shots, ricochets, collisions, damage, game start, and game over.
+- **Scene Management**: Intro start screen, active match scene, and game-over winner announcement with instant restart (`SPACE`).
+
 
