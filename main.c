@@ -19,7 +19,7 @@ const float tankCollisionRad = 44.0f;
 const float tankFlashTime = 0.15f;
 const float tankSpeed = 3.0f;
 const float tankRotationSpeed = 2.0f;
-Vector2 tankOrigin = {tankWidth / 2, tankWidth / 2};
+Vector2 tankOrigin = {tankWidth / 2, tankHeight / 2};
 const Color initialTank1Color = BLUE;
 const Color initialTank2Color = RED;
 Color tank1Color = initialTank1Color; //
@@ -66,7 +66,7 @@ typedef struct TankControls {
 typedef struct Tank {
   Vector2 position, origin;
   float width, height, halfW, halfH, radius, rotation, speed, flashTimer;
-  int lives;
+  int lives, playerID;
   Color currentColor, baseColor;
   Bullet bullets[maxBullets];
   TankControls controls;
@@ -313,7 +313,7 @@ void CheckBulletTankCollision(Tank *tank1, Tank *tank2) {
       PlaySound(sounds.tankExplosionSFX);
 
       if (tank2->lives <= 0) {
-        winner = 1;
+        winner = tank1->playerID;
         PlaySound(sounds.gameOverSFX);
         currentScene = EndScene;
       }
@@ -332,6 +332,7 @@ int main(void) {
                 .speed = tankSpeed,
                 .flashTimer = tankFlashTime,
                 .lives = maxLives,
+                .playerID = 1,
                 .currentColor = initialTank1Color,
                 .baseColor = initialTank1Color,
                 .controls = {KEY_W, KEY_S, KEY_A, KEY_D, KEY_LEFT_SHIFT},
@@ -354,6 +355,7 @@ int main(void) {
       .speed = tankSpeed,
       .flashTimer = tankFlashTime,
       .lives = maxLives,
+      .playerID = 2,
       .currentColor = initialTank2Color,
       .baseColor = initialTank2Color,
       .controls = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_RIGHT_SHIFT},
