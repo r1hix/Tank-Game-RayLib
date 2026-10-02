@@ -1,5 +1,6 @@
 # Build artifacts
 game
+game.exe
 *.o
 *.a
 *.dylib
@@ -11,3 +12,4 @@ game
 .vscode/
 .idea/
 *.swp
+compile_flags.txt
