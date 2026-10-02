@@ -87,6 +87,7 @@ int main(void) {
   Sound bulletExplosionSFX = LoadSound("resources/bulletExplosion.wav");
   Sound bulletBounceSFX = LoadSound("resources/bulletBounce.wav");
   Sound gameOverSFX = LoadSound("resources/gameOver.wav");
+  Sound gameStartSFX = LoadSound("resources/gameStart.wav");
 
   Scene currentScene = IntroScene;
 
@@ -99,6 +100,7 @@ int main(void) {
     // Scene: Intro
     case IntroScene: {
       if (IsKeyPressed(KEY_SPACE)) {
+        PlaySound(gameStartSFX);
         currentScene = GameScene;
       }
       break;
@@ -441,6 +443,7 @@ int main(void) {
         tank2FlashTimer = 0.0f;
         tank2Color = initialTank2Color;
 
+        PlaySound(gameStartSFX);
         currentScene = GameScene;
       }
       break;
@@ -523,6 +526,7 @@ int main(void) {
   UnloadSound(bulletExplosionSFX);
   UnloadSound(bulletBounceSFX);
   UnloadSound(gameOverSFX);
+  UnloadSound(gameStartSFX);
 
   CloseAudioDevice();
   CloseWindow();
