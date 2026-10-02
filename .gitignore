@@ -13,3 +13,5 @@ game.exe
 .idea/
 *.swp
 compile_flags.txt
+
+.clang-format

@@ -2,50 +2,16 @@
 #include <raylib.h>
 #include <raymath.h>
 
-// - Constants -
+// === Constants & Definitions ===
 
-typedef enum Scene { IntroScene, GameScene, EndScene } Scene;
-
-// --- Window Dimensions ---
-const int windowWidth = 800;
-const int windowHeight = 800;
-
-short unsigned int winner = 0;
-
-// --- Tank Dimensions ---
-const float tankWidth = 100.0f;
-const float tankHeight = 70.0f;
-const float tankCollisionRad = 44.0f;
-const float tankFlashTime = 0.15f;
-const float tankSpeed = 3.0f;
-const float tankRotationSpeed = 2.0f;
-Vector2 tankOrigin = {tankWidth / 2, tankHeight / 2};
-const Color initialTank1Color = BLUE;
-const Color initialTank2Color = RED;
-Color tank1Color = initialTank1Color; //
-Color tank2Color = initialTank2Color; //
-Color tankFlashColor = PURPLE;
-float tank1FlashTimer = 0.0f; //
-float tank2FlashTimer = 0.0f;
-// --- Initial Tank Positions ---
 #define maxLives 3
-Scene currentScene;
-
-// Tank 1
-
-const int initialTank1XPos = 50;
-const int initialTank1YPos = (windowHeight - tankHeight) / 2;
-const float initialTank1Rotation = 0.0f;
-
-// Tank 2
-const int initialTank2XPos = windowWidth - initialTank1XPos - tankWidth;
-const int initialTank2YPos = initialTank1YPos;
-const float initialTank2Rotation = 180.0f;
-
-// --- Bullets ---
 #define maxBullets 2
 #define bulletSpeed 5
 #define bulletSize 10
+
+typedef enum Scene { IntroScene, GameScene, EndScene } Scene;
+
+// === Structs ===
 
 typedef struct Bullet {
   bool active;
@@ -55,9 +21,6 @@ typedef struct Bullet {
   Color color;
   float lifetime;
 } Bullet;
-
-Bullet tank1Bullets[maxBullets];
-Bullet tank2Bullets[maxBullets];
 
 typedef struct TankControls {
   int key_Up, key_Down, key_Left, key_Right, key_Fire;
@@ -78,9 +41,37 @@ typedef struct Sounds {
       gameOverSFX, gameStartSFX;
 } Sounds;
 
+// === Configuration ===
+
+const int windowWidth = 800;
+const int windowHeight = 800;
+
+const float tankWidth = 100.0f;
+const float tankHeight = 70.0f;
+const float tankCollisionRad = 44.0f;
+const float tankFlashTime = 0.15f;
+const float tankSpeed = 3.0f;
+const float tankRotationSpeed = 2.0f;
+Vector2 tankOrigin = {tankWidth / 2, tankHeight / 2};
+
+const Color initialTank1Color = BLUE;
+const Color initialTank2Color = RED;
+const Color tankFlashColor = PURPLE;
+
+const int initialTank1XPos = 50;
+const int initialTank1YPos = (windowHeight - tankHeight) / 2;
+const float initialTank1Rotation = 0.0f;
+
+const int initialTank2XPos = windowWidth - initialTank1XPos - tankWidth;
+const int initialTank2YPos = initialTank1YPos;
+const float initialTank2Rotation = 180.0f;
+
+short unsigned int winner = 0;
+Scene currentScene;
 Sounds sounds;
 
-// Functions
+// === Render / UI Functions ===
+
 void DrawIntroUI(void) {
   DrawText("Tank Game", windowWidth / 2 - MeasureText("Tank Game", 40) / 2,
            windowHeight / 2 - 40, 40, BLACK);
@@ -112,11 +103,9 @@ void DrawEndUI(void) {
 }
 
 void DrawTank(const Tank *tank) {
-  // Drawing Tanks
   DrawRectanglePro(tank->body, tank->origin, tank->rotation,
                    tank->currentColor);
 
-  // Drawing Bullets
   for (int i = 0; i < maxBullets; i++) {
     if (tank->bullets[i].active) {
       DrawCircleV(tank->bullets[i].position, tank->bullets[i].size,
@@ -125,11 +114,13 @@ void DrawTank(const Tank *tank) {
   }
 }
 
+// === Game Logic & Updates ===
+
 void ResetGameState(Tank *tank1, Tank *tank2) {
   winner = 0;
 
   for (int i = 0; i < maxBullets; i++) {
-    tank1Bullets[i].active = false;
+    tank1->bullets[i].active = false;
     tank1->bullets[i].lifetime = 0.0f;
     tank2->bullets[i].active = false;
     tank2->bullets[i].lifetime = 0.0f;
@@ -151,7 +142,6 @@ void ResetGameState(Tank *tank1, Tank *tank2) {
 }
 
 void UpdateTank(Tank *tank) {
-
   float rad = DEG2RAD * tank->rotation;
   float dx = cosf(rad);
   float dy = sinf(rad);
@@ -173,7 +163,7 @@ void UpdateTank(Tank *tank) {
   if (IsKeyDown(tank->controls.key_Right))
     tank->rotation += tankRotationSpeed;
 
-  // Tank 1 Shooting
+  // Bullet Firing
   if (IsKeyPressed(tank->controls.key_Fire)) {
     for (int i = 0; i < maxBullets; i++) {
       if (!tank->bullets[i].active) {
@@ -195,9 +185,7 @@ void UpdateTank(Tank *tank) {
     }
   }
 
-  // --- Updating Bullets ---
-
-  // Tank1
+  // Bullet Movement & Lifetime Management
   for (int i = 0; i < maxBullets; i++) {
     if (tank->bullets[i].active) {
       tank->bullets[i].position.x += tank->bullets[i].velocity.x;
@@ -211,14 +199,13 @@ void UpdateTank(Tank *tank) {
     }
   }
 
-  // --- Boundary Constraints ---
+  // AABB Calculation
+  tank->halfW =
+      (tankWidth / 2) * fabsf(cosf(rad)) + (tankHeight / 2) * fabsf(sinf(rad));
+  tank->halfH =
+      (tankWidth / 2) * fabsf(sinf(rad)) + (tankHeight / 2) * fabsf(cosf(rad));
 
-  // Tank 1
-  tank->halfW = (tankWidth / 2) * fabsf(cosf(tank->radius)) +
-                (tankHeight / 2) * fabsf(sinf(tank->radius));
-  tank->halfH = (tankWidth / 2) * fabsf(sinf(tank->radius)) +
-                (tankHeight / 2) * fabsf(cosf(tank->radius));
-
+  // Screen Boundary Collision
   if (tank->body.x - tank->halfW < 0)
     tank->body.x = tank->halfW;
   if (tank->body.x + tank->halfW > windowWidth)
@@ -228,7 +215,7 @@ void UpdateTank(Tank *tank) {
   if (tank->body.y + tank->halfH > windowHeight)
     tank->body.y = windowHeight - tank->halfH;
 
-  // Bullets
+  // Screen Edge Collision
   for (int i = 0; i < maxBullets; i++) {
     if (tank->bullets[i].position.x < 0) {
       tank->bullets[i].position.x = 0;
@@ -253,13 +240,14 @@ void UpdateTank(Tank *tank) {
   }
 }
 
+// === Collision Handling ===
+
 void CheckTankTankCollision(Tank *tank1, Tank *tank2) {
-  // --- Tank Collisions ---
   if (CheckCollisionRecs(tank1->body, tank2->body)) {
     float overlapX =
-        (tank1->halfH + tank2->halfW) - fabsf(tank1->body.x - tank2->body.x);
+        (tank1->halfW + tank2->halfW) - fabsf(tank1->body.x - tank2->body.x);
     float overlapY =
-        (tank1->halfH + tank2->halfW) - fabsf(tank1->body.y - tank2->body.y);
+        (tank1->halfH + tank2->halfH) - fabsf(tank1->body.y - tank2->body.y);
 
     if (overlapX < overlapY) {
       if (tank1->body.x < tank2->body.x) {
@@ -321,8 +309,10 @@ void CheckBulletTankCollision(Tank *tank1, Tank *tank2) {
   }
 }
 
-int main(void) {
+// === Main Program ===
 
+int main(void) {
+  // Tank 1 Initialization
   Tank tank1 = {.position = {initialTank1XPos, initialTank1YPos},
                 .width = tankWidth,
                 .height = tankHeight,
@@ -345,6 +335,7 @@ int main(void) {
                 .halfH = (tankWidth / 2) * fabsf(sinf(initialTank1Rotation)) +
                          (tankHeight / 2) * fabsf(cosf(initialTank1Rotation))};
 
+  // Tank 2 Initialization
   Tank tank2 = {
       .position = {initialTank2XPos, initialTank2YPos},
       .width = tankWidth,
@@ -368,11 +359,9 @@ int main(void) {
       .halfH = (tankWidth / 2) * fabsf(sinf(initialTank2Rotation)) +
                (tankHeight / 2) * fabsf(cosf(initialTank2Rotation))};
 
-  // --- Initialize Window ---
   InitWindow(windowWidth, windowHeight, "Tank Game");
   SetTargetFPS(60);
 
-  // --- Sound Effects ---
   InitAudioDevice();
 
   sounds.shootSFX = LoadSound("resources/shoot.wav");
@@ -384,13 +373,10 @@ int main(void) {
 
   currentScene = IntroScene;
 
-  // --- Game Loop ---
+  // -- Game Loop --
+
   while (!WindowShouldClose()) {
-    // --- Input Handling ---
-
     switch (currentScene) {
-
-    // Scene: Intro
     case IntroScene: {
       if (IsKeyPressed(KEY_SPACE)) {
         PlaySound(sounds.gameStartSFX);
@@ -399,18 +385,17 @@ int main(void) {
       break;
     }
 
-    // Scene: Game
     case GameScene: {
-
       UpdateTank(&tank1);
       UpdateTank(&tank2);
 
+      // Collision Detection
       CheckTankTankCollision(&tank1, &tank2);
-      CheckBulletTankCollision(&tank1, &tank2); // t1 bullets hitting t2
-      CheckBulletTankCollision(&tank2, &tank1); // t2 bullets hitting t1
+      CheckBulletTankCollision(&tank1, &tank2);
+      CheckBulletTankCollision(&tank2, &tank1);
       CheckBulletBulletCollision(&tank1, &tank2);
 
-      // Flashing Logic
+      // Flash Timers
       if (tank1.flashTimer > 0.0f) {
         tank1.flashTimer -= GetFrameTime();
         tank1.currentColor = tankFlashColor;
@@ -428,7 +413,6 @@ int main(void) {
       break;
     }
 
-    // Scene: End
     case EndScene: {
       if (IsKeyPressed(KEY_SPACE)) {
         ResetGameState(&tank1, &tank2);
@@ -439,19 +423,17 @@ int main(void) {
     }
     }
 
-    // --- Drawing ---
+    // -- Draw Phase --
+
     BeginDrawing();
     ClearBackground(WHITE);
 
     switch (currentScene) {
-
-    // Scene: Intro
     case IntroScene: {
       DrawIntroUI();
       break;
     }
 
-    // Scene: Game
     case GameScene: {
       DrawTank(&tank1);
       DrawTank(&tank2);
@@ -459,7 +441,6 @@ int main(void) {
       break;
     }
 
-    // Scene: End
     case EndScene: {
       DrawEndUI();
       break;
@@ -469,7 +450,7 @@ int main(void) {
     EndDrawing();
   }
 
-  // --- Cleanup ---
+  // -- Cleanup --
 
   UnloadSound(sounds.shootSFX);
   UnloadSound(sounds.tankExplosionSFX);
