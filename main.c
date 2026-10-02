@@ -81,30 +81,73 @@ typedef struct Sounds {
 Sounds sounds;
 
 // Functions
+void DrawIntroUI(void) {
+  DrawText("Tank Game", windowWidth / 2 - MeasureText("Tank Game", 40) / 2,
+           windowHeight / 2 - 40, 40, BLACK);
+
+  DrawText("Press space to start",
+           windowWidth / 2 - MeasureText("Press space to start", 20) / 2,
+           windowHeight / 2 + 40, 20, BLACK);
+}
+
+void DrawHUD(const Tank *tank1, const Tank *tank2) {
+  DrawText(TextFormat("P1 Lives: %i", tank1->lives), 10, 10, 20, BLACK);
+  DrawText(TextFormat("P2 Lives: %i", tank2->lives),
+           windowWidth - MeasureText("P2 Lives: 3", 20) - 10, 10, 20, BLACK);
+}
+
+void DrawEndUI(void) {
+  if (winner == 1) {
+    DrawText("Player 1 Wins!",
+             windowWidth / 2 - MeasureText("Player 2 Wins!", 40) / 2,
+             windowHeight / 2 - 40, 40, BLACK);
+  } else {
+    DrawText("Player 2 Wins!",
+             windowWidth / 2 - MeasureText("Player 2 Wins!", 40) / 2,
+             windowHeight / 2 - 40, 40, BLACK);
+  }
+  DrawText("Press space to restart",
+           windowWidth / 2 - MeasureText("Press space to restart", 20) / 2,
+           windowHeight / 2 + 40, 20, BLACK);
+}
+
+void DrawTank(const Tank *tank) {
+  // Drawing Tanks
+  DrawRectanglePro(tank->body, tank->origin, tank->rotation,
+                   tank->currentColor);
+
+  // Drawing Bullets
+  for (int i = 0; i < maxBullets; i++) {
+    if (tank->bullets[i].active) {
+      DrawCircleV(tank->bullets[i].position, tank->bullets[i].size,
+                  tank->bullets[i].color);
+    }
+  }
+}
 
 void ResetGameState(Tank *tank1, Tank *tank2) {
-         winner = 0;
+  winner = 0;
 
-        for (int i = 0; i < maxBullets; i++) {
-          tank1Bullets[i].active = false;
-          tank1->bullets[i].lifetime = 0.0f;
-          tank2->bullets[i].active = false;
-          tank2->bullets[i].lifetime = 0.0f;
-        }
+  for (int i = 0; i < maxBullets; i++) {
+    tank1Bullets[i].active = false;
+    tank1->bullets[i].lifetime = 0.0f;
+    tank2->bullets[i].active = false;
+    tank2->bullets[i].lifetime = 0.0f;
+  }
 
-        tank1->body.x = initialTank1XPos;
-        tank1->body.y = initialTank1YPos;
-        tank1->rotation = initialTank1Rotation;
-        tank1->lives = maxLives;
-        tank1->flashTimer = 0.0f;
-        tank1->currentColor = tank1->baseColor;
+  tank1->body.x = initialTank1XPos;
+  tank1->body.y = initialTank1YPos;
+  tank1->rotation = initialTank1Rotation;
+  tank1->lives = maxLives;
+  tank1->flashTimer = 0.0f;
+  tank1->currentColor = tank1->baseColor;
 
-        tank2->body.x = initialTank2XPos;
-        tank2->body.y = initialTank2YPos;
-        tank2->rotation = initialTank2Rotation;
-        tank2->lives = maxLives;
-        tank2->flashTimer = 0.0f;
-        tank2->currentColor = tank2->baseColor;
+  tank2->body.x = initialTank2XPos;
+  tank2->body.y = initialTank2YPos;
+  tank2->rotation = initialTank2Rotation;
+  tank2->lives = maxLives;
+  tank2->flashTimer = 0.0f;
+  tank2->currentColor = tank2->baseColor;
 }
 
 void UpdateTank(Tank *tank) {
@@ -258,25 +301,24 @@ void CheckBulletBulletCollision(Tank *tank1, Tank *tank2) {
 }
 
 void CheckBulletTankCollision(Tank *tank1, Tank *tank2) {
-      for (int i = 0; i < maxBullets; i++) {
-        if (tank1->bullets[i].active &&
-            CheckCollisionCircles(
-                tank1->bullets[i].position, tank1->bullets[i].size,
-                (Vector2){tank2->body.x, tank2->body.y}, tankCollisionRad)) {
-          tank2->lives -= 1;
-          tank2->flashTimer = tankFlashTime;
-          tank1->bullets[i].active = false;
-          tank1->bullets[i].lifetime = 0.0f;
-          PlaySound(sounds.tankExplosionSFX);
+  for (int i = 0; i < maxBullets; i++) {
+    if (tank1->bullets[i].active &&
+        CheckCollisionCircles(
+            tank1->bullets[i].position, tank1->bullets[i].size,
+            (Vector2){tank2->body.x, tank2->body.y}, tankCollisionRad)) {
+      tank2->lives -= 1;
+      tank2->flashTimer = tankFlashTime;
+      tank1->bullets[i].active = false;
+      tank1->bullets[i].lifetime = 0.0f;
+      PlaySound(sounds.tankExplosionSFX);
 
-          if (tank2->lives <= 0) {
-            winner = 1;
-            PlaySound(sounds.gameOverSFX);
-            currentScene = EndScene;
-          }
-        }
-}
-
+      if (tank2->lives <= 0) {
+        winner = 1;
+        PlaySound(sounds.gameOverSFX);
+        currentScene = EndScene;
+      }
+    }
+  }
 }
 
 int main(void) {
@@ -362,23 +404,23 @@ int main(void) {
       UpdateTank(&tank2);
 
       CheckTankTankCollision(&tank1, &tank2);
-CheckBulletTankCollision(&tank1, &tank2); // t1 bullets hitting t2
-CheckBulletTankCollision(&tank2, &tank1); // t2 bullets hitting t1
-CheckBulletBulletCollision(&tank1, &tank2);
+      CheckBulletTankCollision(&tank1, &tank2); // t1 bullets hitting t2
+      CheckBulletTankCollision(&tank2, &tank1); // t2 bullets hitting t1
+      CheckBulletBulletCollision(&tank1, &tank2);
 
       // Flashing Logic
       if (tank1.flashTimer > 0.0f) {
         tank1.flashTimer -= GetFrameTime();
         tank1.currentColor = tankFlashColor;
       } else {
-        tank1.currentColor= initialTank1Color;
+        tank1.currentColor = initialTank1Color;
       }
 
       if (tank2.flashTimer > 0.0f) {
         tank2.flashTimer -= GetFrameTime();
         tank2.currentColor = tankFlashColor;
       } else {
-        tank2.currentColor= initialTank2Color;
+        tank2.currentColor = initialTank2Color;
       }
 
       break;
@@ -403,60 +445,21 @@ CheckBulletBulletCollision(&tank1, &tank2);
 
     // Scene: Intro
     case IntroScene: {
-      DrawText("Tank Game", windowWidth / 2 - MeasureText("Tank Game", 40) / 2,
-               windowHeight / 2 - 40, 40, BLACK);
-
-      DrawText("Press space to start",
-               windowWidth / 2 - MeasureText("Press space to start", 20) / 2,
-               windowHeight / 2 + 40, 20, BLACK);
+      DrawIntroUI();
       break;
     }
 
     // Scene: Game
     case GameScene: {
-      // Drawing Tanks
-      DrawRectanglePro(tank1.body, tank1.origin, tank1.rotation, tank1.currentColor);
-      DrawRectanglePro(tank2.body, tank2.origin, tank2.rotation, tank2.currentColor);
-
-      // Drawing Bullets
-      for (int i = 0; i < maxBullets; i++) {
-        if (tank1.bullets[i].active) {
-          DrawCircleV(tank1.bullets[i].position, tank1.bullets[i].size,
-                      tank1.bullets[i].color);
-        }
-      }
-
-      for (int i = 0; i < maxBullets; i++) {
-        if (tank2.bullets[i].active) {
-          DrawCircleV(tank2.bullets[i].position, tank2.bullets[i].size,
-                      tank2.bullets[i].color);
-        }
-      }
-
-      // Drawing UI
-      DrawText(TextFormat("P1 Lives: %i", tank1.lives), 10, 10, 20, BLACK);
-      DrawText(TextFormat("P2 Lives: %i", tank2.lives),
-               windowWidth - MeasureText("P2 Lives: 3", 20) - 10, 10, 20,
-               BLACK);
-
+      DrawTank(&tank1);
+      DrawTank(&tank2);
+      DrawHUD(&tank1, &tank2);
       break;
     }
 
     // Scene: End
     case EndScene: {
-
-      if (winner == 1) {
-        DrawText("Player 1 Wins!",
-                 windowWidth / 2 - MeasureText("Player 2 Wins!", 40) / 2,
-                 windowHeight / 2 - 40, 40, BLACK);
-      } else {
-        DrawText("Player 2 Wins!",
-                 windowWidth / 2 - MeasureText("Player 2 Wins!", 40) / 2,
-                 windowHeight / 2 - 40, 40, BLACK);
-      }
-      DrawText("Press space to restart",
-               windowWidth / 2 - MeasureText("Press space to restart", 20) / 2,
-               windowHeight / 2 + 40, 20, BLACK);
+      DrawEndUI();
       break;
     }
     }
