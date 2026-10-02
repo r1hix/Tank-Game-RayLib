@@ -171,6 +171,8 @@ int main(void) {
             tank1Bullets[i].color = BLACK;
             tank1Bullets[i].active = true;
             tank1Bullets[i].lifetime = 0.0f;
+
+            PlaySound(shootSFX);
             break;
           }
         }
@@ -194,6 +196,8 @@ int main(void) {
             tank2Bullets[i].color = BLACK;
             tank2Bullets[i].active = true;
             tank2Bullets[i].lifetime = 0.0f;
+
+            PlaySound(shootSFX);
             break;
           }
         }
@@ -269,36 +273,44 @@ int main(void) {
         if (tank1Bullets[i].position.x < 0) {
           tank1Bullets[i].position.x = 0;
           tank1Bullets[i].velocity.x = -tank1Bullets[i].velocity.x;
+          PlaySound(bulletBounceSFX);
         }
         if (tank1Bullets[i].position.x > windowWidth) {
           tank1Bullets[i].position.x = windowWidth;
           tank1Bullets[i].velocity.x = -tank1Bullets[i].velocity.x;
+          PlaySound(bulletBounceSFX);
         }
         if (tank1Bullets[i].position.y < 0) {
           tank1Bullets[i].position.y = 0;
           tank1Bullets[i].velocity.y = -tank1Bullets[i].velocity.y;
+          PlaySound(bulletBounceSFX);
         }
         if (tank1Bullets[i].position.y > windowHeight) {
           tank1Bullets[i].position.y = windowHeight;
           tank1Bullets[i].velocity.y = -tank1Bullets[i].velocity.y;
+          PlaySound(bulletBounceSFX);
         }
 
         // Tank 2 Bullets
         if (tank2Bullets[i].position.x < 0) {
           tank2Bullets[i].position.x = 0;
           tank2Bullets[i].velocity.x = -tank2Bullets[i].velocity.x;
+          PlaySound(bulletBounceSFX);
         }
         if (tank2Bullets[i].position.x > windowWidth) {
           tank2Bullets[i].position.x = windowWidth;
           tank2Bullets[i].velocity.x = -tank2Bullets[i].velocity.x;
+          PlaySound(bulletBounceSFX);
         }
         if (tank2Bullets[i].position.y < 0) {
           tank2Bullets[i].position.y = 0;
           tank2Bullets[i].velocity.y = -tank2Bullets[i].velocity.y;
+          PlaySound(bulletBounceSFX);
         }
         if (tank2Bullets[i].position.y > windowHeight) {
           tank2Bullets[i].position.y = windowHeight;
           tank2Bullets[i].velocity.y = -tank2Bullets[i].velocity.y;
+          PlaySound(bulletBounceSFX);
         }
       }
 
@@ -341,6 +353,8 @@ int main(void) {
 
             tank2Bullets[j].active = false;
             tank2Bullets[j].lifetime = 0.0f;
+
+            PlaySound(bulletExplosionSFX);
           }
         }
       }
@@ -356,8 +370,10 @@ int main(void) {
           tank2FlashTimer = tankFlashTime;
           tank1Bullets[i].active = false;
           tank1Bullets[i].lifetime = 0.0f;
+          PlaySound(tankExplosionSFX);
           if (tank2Lives <= 0) {
             winner = 1;
+            PlaySound(gameOverSFX);
             currentScene = EndScene;
           }
         }
@@ -371,8 +387,11 @@ int main(void) {
           tank1FlashTimer = tankFlashTime;
           tank2Bullets[i].active = false;
           tank2Bullets[i].lifetime = 0.0f;
+          PlaySound(tankExplosionSFX);
+
           if (tank1Lives <= 0) {
             winner = 2;
+            PlaySound(gameOverSFX);
             currentScene = EndScene;
           }
         }
