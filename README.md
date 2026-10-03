@@ -44,4 +44,20 @@ make clean
 - **Sound Effects (SFX)**: Full audio feedback for tank shots, ricochets, collisions, damage, game start, and game over.
 - **Scene Management**: Intro start screen, active match scene, and game-over winner announcement with instant restart (`SPACE`).
 
+## Project Structure
+
+```text
+├── Makefile        # Build rules and raylib flags for clang/gcc
+├── main.c          # Complete game implementation with modular routines
+├── resources/      # Audio assets (.wav files for SFX)
+└── README.md       # Game documentation and build guide
+```
+
+## Architecture
+
+- **`Tank` & `Bullet` Models**: Self-contained state representations including position, rotation, AABB dimensions, health, and cooldowns.
+- **Collision Pipeline**: Continuous detection for Tank-Tank overlap resolution, Bullet-Bullet mutual destruction, Bullet-Tank lethal checks, and screen edge bouncing.
+- **Game State Machine**: Scene-driven architecture (`IntroScene` -> `GameScene` -> `EndScene`) providing clean separation between game update ticks and rendering passes.
+
+
 
