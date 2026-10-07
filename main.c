@@ -34,6 +34,7 @@ typedef struct Tank {
   Bullet bullets[maxBullets];
   TankControls controls;
   Rectangle body;
+  Rectangle barrel;
 } Tank;
 
 typedef struct Sounds {
@@ -48,6 +49,9 @@ const int windowHeight = 800;
 
 const float tankWidth = 100.0f;
 const float tankHeight = 70.0f;
+const float barrelOffsetX = 10.0f;
+const float barrelWidth = tankWidth + barrelOffsetX;
+const float barrelHeight = tankHeight;
 const float tankCollisionRad = 44.0f;
 const float tankFlashTime = 0.15f;
 const float tankSpeed = 3.0f;
@@ -65,6 +69,8 @@ const float initialTank1Rotation = 0.0f;
 const int initialTank2XPos = windowWidth - initialTank1XPos - tankWidth;
 const int initialTank2YPos = initialTank1YPos;
 const float initialTank2Rotation = 180.0f;
+
+Rectangle tankBarrel = {0, 0, barrelWidth, barrelHeight};
 
 short unsigned int winner = 0;
 Scene currentScene;
@@ -103,9 +109,10 @@ void DrawEndUI(void) {
 }
 
 void DrawTank(const Tank *tank) {
+  DrawRectanglePro(tank->barrel, tank->origin, tank->rotation, BLACK);
   DrawRectanglePro(tank->body, tank->origin, tank->rotation,
                    tank->currentColor);
-
+  
   for (int i = 0; i < maxBullets; i++) {
     if (tank->bullets[i].active) {
       DrawCircleV(tank->bullets[i].position, tank->bullets[i].size,
@@ -142,6 +149,9 @@ void ResetGameState(Tank *tank1, Tank *tank2) {
 }
 
 void UpdateTank(Tank *tank) {
+  tank->barrel.x = tank->body.x;
+  tank->barrel.y = tank->body.y;
+
   float rad = DEG2RAD * tank->rotation;
   float dx = cosf(rad);
   float dy = sinf(rad);
@@ -330,6 +340,7 @@ int main(void) {
                          .y = initialTank1YPos,
                          .width = tankWidth,
                          .height = tankHeight},
+                .barrel = {.x = 0, .y = 0, .width = barrelWidth, .height = barrelHeight},
                 .halfW = (tankWidth / 2) * fabsf(cosf(initialTank1Rotation)) +
                          (tankHeight / 2) * fabsf(sinf(initialTank1Rotation)),
                 .halfH = (tankWidth / 2) * fabsf(sinf(initialTank1Rotation)) +
@@ -354,6 +365,7 @@ int main(void) {
                .y = initialTank2YPos,
                .width = tankWidth,
                .height = tankHeight},
+              .barrel = {.x = 0, .y = 0, .width = barrelWidth, .height = barrelHeight},
       .halfW = (tankWidth / 2) * fabsf(cosf(initialTank2Rotation)) +
                (tankHeight / 2) * fabsf(sinf(initialTank2Rotation)),
       .halfH = (tankWidth / 2) * fabsf(sinf(initialTank2Rotation)) +
