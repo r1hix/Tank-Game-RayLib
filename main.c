@@ -22,19 +22,25 @@ typedef struct Bullet {
   float lifetime;
 } Bullet;
 
+typedef struct TankBarrel {
+  Vector2 origin;
+  Color color;
+  Rectangle body;
+} TankBarrel;
+
 typedef struct TankControls {
   int key_Up, key_Down, key_Left, key_Right, key_Fire;
 } TankControls;
 
 typedef struct Tank {
-  Vector2 position, origin;
+  Vector2 origin;
   float width, height, halfW, halfH, radius, rotation, speed, flashTimer;
   int lives, playerID;
   Color currentColor, baseColor;
   Bullet bullets[maxBullets];
   TankControls controls;
+  TankBarrel barrel;
   Rectangle body;
-  Rectangle barrel;
 } Tank;
 
 typedef struct Sounds {
@@ -49,18 +55,20 @@ const int windowHeight = 800;
 
 const float tankWidth = 100.0f;
 const float tankHeight = 70.0f;
-const float barrelOffsetX = 10.0f;
-const float barrelWidth = tankWidth + barrelOffsetX;
-const float barrelHeight = tankHeight;
+const float barrelWidth = 60.0f;
+const float barrelHeight = 18.0f;
 const float tankCollisionRad = 44.0f;
 const float tankFlashTime = 0.15f;
 const float tankSpeed = 3.0f;
 const float tankRotationSpeed = 2.0f;
-Vector2 tankOrigin = {tankWidth / 2, tankHeight / 2};
+const Vector2 tankOrigin = {tankWidth / 2.0f, tankHeight / 2.0f};
+const Vector2 barrelOrigin = {(barrelWidth / 2.0f) - (tankWidth / 2.0f),
+                              barrelHeight / 2.0f};
 
 const Color initialTank1Color = BLUE;
 const Color initialTank2Color = RED;
 const Color tankFlashColor = PURPLE;
+const Color barrelColor = (Color){40, 40, 40, 255};
 
 const int initialTank1XPos = 50;
 const int initialTank1YPos = (windowHeight - tankHeight) / 2;
@@ -69,8 +77,6 @@ const float initialTank1Rotation = 0.0f;
 const int initialTank2XPos = windowWidth - initialTank1XPos - tankWidth;
 const int initialTank2YPos = initialTank1YPos;
 const float initialTank2Rotation = 180.0f;
-
-Rectangle tankBarrel = {0, 0, barrelWidth, barrelHeight};
 
 short unsigned int winner = 0;
 Scene currentScene;
@@ -109,10 +115,11 @@ void DrawEndUI(void) {
 }
 
 void DrawTank(const Tank *tank) {
-  DrawRectanglePro(tank->barrel, tank->origin, tank->rotation, BLACK);
   DrawRectanglePro(tank->body, tank->origin, tank->rotation,
                    tank->currentColor);
-  
+  DrawRectanglePro(tank->barrel.body, tank->barrel.origin, tank->rotation,
+                   tank->barrel.color);
+
   for (int i = 0; i < maxBullets; i++) {
     if (tank->bullets[i].active) {
       DrawCircleV(tank->bullets[i].position, tank->bullets[i].size,
@@ -149,8 +156,8 @@ void ResetGameState(Tank *tank1, Tank *tank2) {
 }
 
 void UpdateTank(Tank *tank) {
-  tank->barrel.x = tank->body.x;
-  tank->barrel.y = tank->body.y;
+  tank->barrel.body.x = tank->body.x;
+  tank->barrel.body.y = tank->body.y;
 
   float rad = DEG2RAD * tank->rotation;
   float dx = cosf(rad);
@@ -158,13 +165,13 @@ void UpdateTank(Tank *tank) {
 
   // Tank Movement
   if (IsKeyDown(tank->controls.key_Up)) {
-    tank->body.x += tankSpeed * dx;
-    tank->body.y += tankSpeed * dy;
+    tank->body.x += tank->speed * dx;
+    tank->body.y += tank->speed * dy;
   }
 
   if (IsKeyDown(tank->controls.key_Down)) {
-    tank->body.x -= tankSpeed * dx;
-    tank->body.y -= tankSpeed * dy;
+    tank->body.x -= tank->speed * dx;
+    tank->body.y -= tank->speed * dy;
   }
 
   if (IsKeyDown(tank->controls.key_Left))
@@ -177,7 +184,7 @@ void UpdateTank(Tank *tank) {
   if (IsKeyPressed(tank->controls.key_Fire)) {
     for (int i = 0; i < maxBullets; i++) {
       if (!tank->bullets[i].active) {
-        float offset = (tank->width / 2) + tank->bullets->size;
+        float offset = (tank->width / 2) + (barrelWidth / 2) + bulletSize;
         Vector2 spawnLocation = {tank->body.x + (dx * offset),
                                  tank->body.y + (dy * offset)};
         Vector2 velocity = {dx * bulletSpeed, dy * bulletSpeed};
@@ -210,10 +217,10 @@ void UpdateTank(Tank *tank) {
   }
 
   // AABB Calculation
-  tank->halfW =
-      (tankWidth / 2) * fabsf(cosf(rad)) + (tankHeight / 2) * fabsf(sinf(rad));
-  tank->halfH =
-      (tankWidth / 2) * fabsf(sinf(rad)) + (tankHeight / 2) * fabsf(cosf(rad));
+  tank->halfW = (tank->width / 2) * fabsf(cosf(rad)) +
+                (tank->height / 2) * fabsf(sinf(rad));
+  tank->halfH = (tank->width / 2) * fabsf(sinf(rad)) +
+                (tank->height / 2) * fabsf(cosf(rad));
 
   // Screen Boundary Collision
   if (tank->body.x - tank->halfW < 0)
@@ -303,7 +310,7 @@ void CheckBulletTankCollision(Tank *tank1, Tank *tank2) {
     if (tank1->bullets[i].active &&
         CheckCollisionCircles(
             tank1->bullets[i].position, tank1->bullets[i].size,
-            (Vector2){tank2->body.x, tank2->body.y}, tankCollisionRad)) {
+            (Vector2){tank2->body.x, tank2->body.y}, tank2->radius)) {
       tank2->lives -= 1;
       tank2->flashTimer = tankFlashTime;
       tank1->bullets[i].active = false;
@@ -323,8 +330,7 @@ void CheckBulletTankCollision(Tank *tank1, Tank *tank2) {
 
 int main(void) {
   // Tank 1 Initialization
-  Tank tank1 = {.position = {initialTank1XPos, initialTank1YPos},
-                .width = tankWidth,
+  Tank tank1 = {.width = tankWidth,
                 .height = tankHeight,
                 .radius = tankCollisionRad,
                 .origin = tankOrigin,
@@ -340,15 +346,15 @@ int main(void) {
                          .y = initialTank1YPos,
                          .width = tankWidth,
                          .height = tankHeight},
-                .barrel = {.x = 0, .y = 0, .width = barrelWidth, .height = barrelHeight},
-                .halfW = (tankWidth / 2) * fabsf(cosf(initialTank1Rotation)) +
-                         (tankHeight / 2) * fabsf(sinf(initialTank1Rotation)),
-                .halfH = (tankWidth / 2) * fabsf(sinf(initialTank1Rotation)) +
-                         (tankHeight / 2) * fabsf(cosf(initialTank1Rotation))};
+                .barrel = {.body.x = 0,
+                           .body.y = 0,
+                           .body.width = barrelWidth,
+                           .body.height = barrelHeight,
+                           .origin = barrelOrigin,
+                           .color = barrelColor}};
 
   // Tank 2 Initialization
   Tank tank2 = {
-      .position = {initialTank2XPos, initialTank2YPos},
       .width = tankWidth,
       .height = tankHeight,
       .radius = tankCollisionRad,
@@ -365,11 +371,12 @@ int main(void) {
                .y = initialTank2YPos,
                .width = tankWidth,
                .height = tankHeight},
-              .barrel = {.x = 0, .y = 0, .width = barrelWidth, .height = barrelHeight},
-      .halfW = (tankWidth / 2) * fabsf(cosf(initialTank2Rotation)) +
-               (tankHeight / 2) * fabsf(sinf(initialTank2Rotation)),
-      .halfH = (tankWidth / 2) * fabsf(sinf(initialTank2Rotation)) +
-               (tankHeight / 2) * fabsf(cosf(initialTank2Rotation))};
+      .barrel = {.body.x = 0,
+                 .body.y = 0,
+                 .body.width = barrelWidth,
+                 .body.height = barrelHeight,
+                 .origin = barrelOrigin,
+                 .color = barrelColor}};
 
   InitWindow(windowWidth, windowHeight, "Tank Game");
   SetTargetFPS(60);
