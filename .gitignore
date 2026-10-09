@@ -4,6 +4,8 @@ game.exe
 *.o
 *.a
 *.dylib
+*.zip
+dist/
 
 # OS metadata
 .DS_Store
