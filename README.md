@@ -6,6 +6,9 @@
 > **Status: Complete** 🎉  
 > This project has reached its target scope and is now declared complete! It served as a deep dive into C game programming, game loops, vector math, collision physics, and audio handling with [raylib](https://www.raylib.com/).
 
+### 🎮 [Download Packaged Release (macOS)](https://github.com/r1hix/Tank-Game-RayLib/releases/latest)
+Download the standalone **`TankGame-v1.0.0-macOS.zip`** — statically linked with raylib with all audio assets bundled. No dependencies or compiler required to run!
+
 A 2D local two-player tank game built completely from scratch in C using raylib.
 
 ---
