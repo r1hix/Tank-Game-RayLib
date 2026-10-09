@@ -1,9 +1,20 @@
 > I wanted to learn how to make a game from scratch using C and raylib.
 > And this documents the entire process of making it from scratch.
 
-# Tank Game
+# Tank Game – RayLib
 
-A 2D local two-player tank game built from scratch in C using [raylib](https://www.raylib.com/).
+> **Status: Complete** 🎉  
+> This project has reached its target scope and is now declared complete! It served as a deep dive into C game programming, game loops, vector math, collision physics, and audio handling with [raylib](https://www.raylib.com/).
+
+A 2D local two-player tank game built completely from scratch in C using raylib.
+
+---
+
+## What's Next?
+
+The next step in my game programming journey is to build an **SDL version** of this same tank game from scratch. Redoing the game in SDL will explore what raylib abstracts away behind its API and provide deeper experience with lower-level windowing, graphics pipelines, and event management.
+
+---
 
 ## Requirements
 
@@ -58,6 +69,3 @@ make clean
 - **`Tank` & `Bullet` Models**: Self-contained state representations including position, rotation, AABB dimensions, health, and cooldowns.
 - **Collision Pipeline**: Continuous detection for Tank-Tank overlap resolution, Bullet-Bullet mutual destruction, Bullet-Tank lethal checks, and screen edge bouncing.
 - **Game State Machine**: Scene-driven architecture (`IntroScene` -> `GameScene` -> `EndScene`) providing clean separation between game update ticks and rendering passes.
-
-
-
